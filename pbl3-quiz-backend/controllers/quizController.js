@@ -67,6 +67,20 @@ const submitQuiz = async (req, res) => {
     }
 };
 
-const updateQuiz = async (req, res) => { res.json({ success: true }); };
+const updateQuiz = async (req, res) => {
+    try {
+        const quizId = req.params.id; // Lấy từ URL /api/v1/quizzes/:id
+        const quizData = req.body;
+        
+        console.log("Đang sửa Quiz ID:", quizId); // Thêm dòng này để debug
+        
+        await quizService.updateFullQuiz(quizId, quizData);
+        
+        res.status(200).json({ success: true, message: 'Cập nhật đề thi thành công!' });
+    } catch (error) {
+        console.error("Lỗi cập nhật:", error);
+        res.status(500).json({ success: false, message: 'Lỗi Server' });
+    }
+};
 
 module.exports = { createQuiz, deleteQuiz, getAllQuizzes, getQuizById, getQuizzesByUser, submitQuiz, updateQuiz };

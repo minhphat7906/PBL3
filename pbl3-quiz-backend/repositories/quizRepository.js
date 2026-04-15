@@ -107,7 +107,25 @@ const deleteQuizById = async (quizId, transaction) => {
     const request = new sql.Request(transaction);
     await request.input('id', sql.Int, quizId).query(`DELETE FROM quizzes WHERE id = @id`);
 };
-
+//---Hàm sửa đề---
+const updateQuizInfo = async (quizId, data, transaction) => {
+    const request = new sql.Request(transaction);
+    return await request
+        .input('id', sql.Int, quizId)
+        .input('title', sql.NVarChar, data.title)
+        .input('description', sql.NVarChar, data.description || '')
+        .input('time_limit', sql.Int, data.time_limit || 30)
+        // Ép kiểu về 0 hoặc 1 để SQL Server đọc được ngay lập tức
+        .input('is_public', sql.Bit, data.is_public ? 1 : 0) 
+        .query(`
+            UPDATE quizzes 
+            SET title = @title, 
+                description = @description, 
+                time_limit = @time_limit, 
+                is_public = @is_public
+            WHERE id = @id
+        `);
+};
 
 
 module.exports = { 
@@ -115,5 +133,6 @@ module.exports = {
     getQuizzesByUserId, getAllPublicQuizzes, 
     getQuizById, getQuestionsByQuizId, 
     saveResult, 
-    deleteResultsByQuizId, deleteQuestionsByQuizId, deleteQuizById 
+    deleteResultsByQuizId, deleteQuestionsByQuizId, deleteQuizById ,
+    updateQuizInfo
 };

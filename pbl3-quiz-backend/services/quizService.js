@@ -100,11 +100,42 @@ const processQuizSubmission = async (userId, quizData) => {
     return { score: parseFloat(scoreUI), correctCount, totalQuestions, time_spent };
 };
 
+const updateFullQuiz = async (quizId, quizData) => {
+    // 1. Tạo Transaction mới
+    const transaction = new sql.Transaction();
+    await transaction.begin();
+
+    try {
+        // 2. Cập nhật thông tin chung (title, description...)
+        // PHẢI CÓ await và PHẢI TRUYỀN transaction vào
+        await quizRepository.updateQuizInfo(quizId, quizData, transaction);
+
+        // 3. Xóa các câu hỏi cũ của đề này
+        await quizRepository.deleteQuestionsByQuizId(quizId, transaction);
+
+        // 4. Thêm lại các câu hỏi mới (đã sửa)
+        for (const q of quizData.questions) {
+            await quizRepository.createQuestion(q, quizId, transaction);
+        }
+
+        // 5. CHỐT HẠ - CỰC KỲ QUAN TRỌNG
+        await transaction.commit(); 
+        return true;
+
+    } catch (err) {
+        // Nếu có bất kỳ lỗi nào, hủy bỏ hết để tránh rác dữ liệu
+        if (transaction) await transaction.rollback();
+        console.error("Lỗi trong quá trình Update Service:", err);
+        throw err;
+    }
+};
+
 module.exports = { 
     createFullQuiz, 
     getMyQuizzes, 
     getHomeQuizzes, 
     getQuizDetail,
     deleteFullQuiz,
-    processQuizSubmission 
+    processQuizSubmission,
+    updateFullQuiz
 };

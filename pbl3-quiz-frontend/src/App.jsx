@@ -6,6 +6,7 @@ import Dashboard from './Dashboard';
 import Home from './Home'; // <-- 1. Import trang Home mới tạo
 import CreateQuiz from './CreateQuiz';
 import QuizArena from './QuizArena';
+import EditQuiz from "./EditQuiz";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -55,6 +56,7 @@ function App() {
     </ProtectedRoute>
   } 
 />
+<Route path="/edit-quiz/:id" element={<EditQuiz />} />
       </Routes>
     </Router>
   );
