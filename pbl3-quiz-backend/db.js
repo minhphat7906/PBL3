@@ -16,9 +16,9 @@ const config = {
 const connectDB = async () => {
     try {
         await sql.connect(config);
-        console.log('🔥 BÊ TÔNG ĐÃ ĐỔ: Kết nối SQL Server thành công!');
+        console.log('Kết nối SQL Server thành công!');
     } catch (err) {
-        console.error('❌ LỖI KẾT NỐI DATABASE:', err);
+        console.error('LỖI KẾT NỐI DATABASE:', err);
     }
 };
 

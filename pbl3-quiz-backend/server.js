@@ -19,9 +19,12 @@ app.get('/api/v1/test', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Máy chủ Backend đang chạy tại: http://localhost:${PORT}`);
+    console.log(`Máy chủ Backend đang chạy tại: http://localhost:${PORT}`);
 });
 
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/v1/auth', authRoutes);
+
+const quizRoutes = require('./routes/quizRoutes');
+app.use('/api/v1/quizzes', quizRoutes);
