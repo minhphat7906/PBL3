@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Save, Plus, Trash2, BookOpen, ImageIcon 
+  ArrowLeft, Save, Plus, Trash2, BookOpen, ImageIcon, CheckSquare 
 } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2'; 
@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 const CreateQuiz = () => {
   const navigate = useNavigate();
   
-  // State lưu thông tin Đề thi (Đã thêm is_public: true mặc định)
+  // State lưu thông tin Đề thi
   const [quizInfo, setQuizInfo] = useState({ 
     title: '', 
     description: '', 
@@ -17,26 +17,65 @@ const CreateQuiz = () => {
     is_public: true 
   });
   
-  // State lưu danh sách Câu hỏi
+  // State lưu danh sách Câu hỏi (Mặc định thêm question_type: 'single')
   const [questions, setQuestions] = useState([
-    { question_text: '', image_url: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '' }
+    { 
+      question_type: 'single', 
+      question_text: '', 
+      image_url: '', 
+      option_a: '', 
+      option_b: '', 
+      option_c: '', 
+      option_d: '', 
+      correct_option: 'A', 
+      explanation: '' 
+    }
   ]);
+
+  // LOGIC: Đổi loại câu hỏi
+  const handleTypeChange = (index, newType) => {
+    const updated = [...questions];
+    updated[index].question_type = newType;
+    
+    // Nếu chọn Đúng/Sai: Tự động set giá trị cho A và B, ẩn C và D
+    if (newType === 'true_false') {
+      updated[index].option_a = 'Đúng';
+      updated[index].option_b = 'Sai';
+      updated[index].option_c = '';
+      updated[index].option_d = '';
+      updated[index].correct_option = 'A'; // Mặc định là A
+    } 
+    // Nếu chọn Nhiều đáp án: correct_option phải chuyển thành Mảng (Array)
+    else if (newType === 'multiple') {
+      updated[index].correct_option = ['A']; 
+    } 
+    // Trở về bình thường
+    else {
+      updated[index].correct_option = 'A';
+    }
+    setQuestions(updated);
+  };
+
+  // LOGIC: Xử lý tick chọn nhiều đáp án cho Multiple Choice
+  const handleCheckboxChange = (index, optionValue, isChecked) => {
+    const updated = [...questions];
+    let currentAns = updated[index].correct_option;
+    
+    // Đảm bảo nó luôn là mảng
+    if (!Array.isArray(currentAns)) currentAns = [];
+
+    if (isChecked) {
+      updated[index].correct_option = [...currentAns, optionValue];
+    } else {
+      updated[index].correct_option = currentAns.filter(val => val !== optionValue);
+    }
+    setQuestions(updated);
+  };
 
   // LOGIC: Thêm câu hỏi
   const handleAddQuestion = () => {
-    const lastQ = questions[questions.length - 1];
-    
-    if (!lastQ.question_text.trim() || !lastQ.option_a.trim() || !lastQ.option_b.trim()) {
-      Swal.fire({
-        title: 'Thông báo',
-        text: 'Bạn vui lòng hoàn thiện nội dung và ít nhất 2 đáp án (A, B) cho câu hiện tại nhé.',
-        icon: 'warning',
-        confirmButtonColor: '#4f46e5'
-      });
-      return;
-    }
-
     setQuestions([...questions, { 
+      question_type: 'single', 
       question_text: '', 
       image_url: '', 
       option_a: '', 
@@ -48,12 +87,14 @@ const CreateQuiz = () => {
     }]);
   };
 
+  // LOGIC: Thay đổi nội dung câu hỏi
   const handleQuestionChange = (index, field, value) => {
     const updated = [...questions];
     updated[index][field] = value;
     setQuestions(updated);
   };
 
+  // LOGIC: Xóa câu hỏi
   const handleRemoveQuestion = (index) => {
     if (questions.length > 1) {
       Swal.fire({
@@ -73,26 +114,55 @@ const CreateQuiz = () => {
     }
   };
 
+  // LOGIC: LƯU ĐỀ THI 
   const handleSave = async () => {
     if (!quizInfo.title.trim()) {
-      Swal.fire('Thiếu thông tin', 'Bạn vui lòng nhập tên đề thi trước khi lưu.', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Thiếu thông tin',
+        text: 'Bạn vui lòng nhập tên đề thi trước khi lưu.',
+        confirmButtonColor: '#4f46e5'
+      });
       return;
     }
 
-    const lastQ = questions[questions.length - 1];
-    if (!lastQ.question_text.trim()) {
-      Swal.fire('Câu hỏi trống', 'Bạn hãy điền nội dung hoặc xóa câu hỏi cuối bị thừa nhé.', 'error');
-      return;
-    }
+    // Kiểm tra tính hợp lệ của từng loại câu hỏi
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
 
-    // Gói dữ liệu (is_public gửi đi dưới dạng 0 hoặc 1 cho SQL)
+      if (!q.question_text.trim()) {
+        Swal.fire({ icon: 'error', title: 'Câu hỏi trống', text: `Câu hỏi số ${i + 1} chưa có nội dung.`, confirmButtonColor: '#4f46e5' });
+        return;
+      }
+
+      // Nếu không phải câu Đúng/Sai thì bắt buộc nhập 4 đáp án
+      if (q.question_type !== 'true_false') {
+        if (!q.option_a.trim() || !q.option_b.trim() || !q.option_c.trim() || !q.option_d.trim()) {
+          Swal.fire({ icon: 'error', title: 'Thiếu đáp án', text: `Câu số ${i + 1} chưa điền đủ 4 đáp án.`, confirmButtonColor: '#4f46e5' });
+          return;
+        }
+      }
+
+      // Bắt buộc phải chọn đáp án đúng
+      if (q.question_type === 'multiple' && (!Array.isArray(q.correct_option) || q.correct_option.length === 0)) {
+        Swal.fire({ icon: 'error', title: 'Thiếu đáp án đúng', text: `Câu số ${i + 1} chưa tick chọn đáp án đúng nào.`, confirmButtonColor: '#4f46e5' });
+        return;
+      }
+    }
+    
+    // Gói dữ liệu: Nếu là multiple, nối mảng ['A', 'C'] thành chuỗi 'A,C' gửi xuống SQL
+    const payloadQuestions = questions.map(q => ({
+      ...q,
+      correct_option: Array.isArray(q.correct_option) ? q.correct_option.sort().join(',') : q.correct_option
+    }));
+
     const payload = { 
       title: quizInfo.title, 
       description: quizInfo.description, 
       time_limit: quizInfo.time_limit,
       is_public: quizInfo.is_public ? 1 : 0,
       category_id: 1, 
-      questions: questions 
+      questions: payloadQuestions 
     };
 
     Swal.fire({
@@ -116,28 +186,34 @@ const CreateQuiz = () => {
           title: 'Thành công!',
           text: 'Đề thi đã được tạo và lưu trữ thành công.',
           icon: 'success',
-          confirmButtonColor: '#4f46e5'
+          confirmButtonColor: '#4f46e5',
+          timer: 2000,
+          showConfirmButton: false
         }).then(() => {
           navigate('/dashboard'); 
         });
       }
     } catch (error) {
       console.error("Lỗi khi lưu:", error);
-      Swal.fire('Lỗi hệ thống', error.response?.data?.message || 'Không thể kết nối đến máy chủ.', 'error');
+      Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: 'Không thể kết nối đến máy chủ. Vui lòng thử lại!', confirmButtonColor: '#4f46e5' });
     }
   };
 
-  const handleGoBack = () => {
-    if (questions[0].question_text.trim() !== "" || quizInfo.title !== "") {
+const handleGoBack = () => {
+    // Quét xem đã có nhập tên đề thi, hoặc có bất kỳ câu hỏi nào được gõ nội dung/chèn ảnh chưa
+    const isEdited = quizInfo.title.trim() !== "" || 
+                     questions.some(q => q.question_text.trim() !== "" || q.image_url.trim() !== "");
+
+    if (isEdited) {
       Swal.fire({
         title: 'Xác nhận thoát?',
-        text: "Các nội dung bạn đang soạn thảo sẽ không được lưu lại.",
-        icon: 'question',
+        text: "Bạn đang soạn dở đề thi. Nếu thoát bây giờ, các nội dung này sẽ KHÔNG được lưu lại đâu nhé!",
+        icon: 'warning', // Đổi sang warning cho nó "nguy hiểm"
         showCancelButton: true,
-        confirmButtonColor: '#4f46e5',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Rời khỏi đây',
-        cancelButtonText: 'Tiếp tục soạn'
+        confirmButtonColor: '#ef4444', // Nút thoát màu đỏ
+        cancelButtonColor: '#64748b',  // Nút ở lại màu xám
+        confirmButtonText: 'Vẫn Thoát',
+        cancelButtonText: 'Ở lại soạn tiếp'
       }).then((res) => {
         if (res.isConfirmed) navigate('/dashboard');
       });
@@ -180,12 +256,12 @@ const CreateQuiz = () => {
           <div className="flex flex-col gap-6">
             <div className="flex gap-6">
                 <div className="flex-1">
-                <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Mô tả đề thi</label>
-                <input type="text" placeholder="Nhập mô tả ngắn..." className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all" value={quizInfo.description} onChange={e => setQuizInfo({...quizInfo, description: e.target.value})} />
+                  <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Mô tả đề thi</label>
+                  <input type="text" placeholder="Nhập mô tả ngắn..." className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all" value={quizInfo.description} onChange={e => setQuizInfo({...quizInfo, description: e.target.value})} />
                 </div>
                 <div className="w-48">
-                <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Thời gian (Phút)</label>
-                <input type="number" className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all font-bold text-[#4f46e5]" value={quizInfo.time_limit} onChange={e => setQuizInfo({...quizInfo, time_limit: parseInt(e.target.value) || 30})} />
+                  <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Thời gian (Phút)</label>
+                  <input type="number" className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all font-bold text-[#4f46e5]" value={quizInfo.time_limit} onChange={e => setQuizInfo({...quizInfo, time_limit: parseInt(e.target.value) || 30})} />
                 </div>
             </div>
 
@@ -209,6 +285,7 @@ const CreateQuiz = () => {
         <div className="space-y-6 mb-10">
           {questions.map((q, index) => (
             <div key={index} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 relative group animate-in zoom-in duration-300">
+              
               {/* STT Câu hỏi */}
               <div className="absolute -left-4 top-8 bg-[#1e1b4b] text-white w-9 h-9 flex items-center justify-center rounded-full font-bold shadow-md border-2 border-[#f8f9fc]">
                 {index + 1}
@@ -217,6 +294,20 @@ const CreateQuiz = () => {
               <button onClick={() => handleRemoveQuestion(index)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-red-50 p-2 rounded-full" title="Xóa câu hỏi">
                 <Trash2 size={18} />
               </button>
+
+              {/* CHỌN LOẠI CÂU HỎI */}
+              <div className="mb-6 pt-2">
+                <label className="font-bold text-slate-700 text-sm mr-3">Dạng câu hỏi:</label>
+                <select 
+                  className="p-2.5 border border-slate-200 rounded-xl outline-none font-bold text-[#4f46e5] bg-indigo-50/50 cursor-pointer focus:ring-2 focus:ring-[#4f46e5]/20"
+                  value={q.question_type || 'single'} 
+                  onChange={(e) => handleTypeChange(index, e.target.value)}
+                >
+                  <option value="single">Chỉ chọn 1 đáp án (A, B, C, D)</option>
+                  <option value="multiple">Chọn nhiều đáp án (Hộp kiểm)</option>
+                  <option value="true_false">Đúng / Sai</option>
+                </select>
+              </div>
 
               {/* Nội dung câu hỏi */}
               <textarea 
@@ -245,41 +336,76 @@ const CreateQuiz = () => {
                 </div>
               )}
               
-              {/* Lưới đáp án */}
+              {/* LƯỚI NHẬP ĐÁP ÁN */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {['A', 'B', 'C', 'D'].map(opt => (
-                  <div key={opt} className="flex items-center gap-3">
-                    <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold transition-colors ${q.correct_option === opt ? 'bg-[#4f46e5] text-white' : 'bg-slate-100 text-slate-500'}`}>
-                      {opt}
+                {['A', 'B', 'C', 'D'].map(opt => {
+                  // Nếu là câu Đúng/Sai, ẩn hoàn toàn đáp án C và D
+                  if (q.question_type === 'true_false' && (opt === 'C' || opt === 'D')) return null;
+
+                  // Xác định xem đáp án này có đang được chọn làm đáp án đúng không (để tô màu CSS)
+                  const isCorrect = Array.isArray(q.correct_option) 
+                    ? q.correct_option.includes(opt) 
+                    : q.correct_option === opt;
+
+                  return (
+                    <div key={opt} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold transition-colors ${isCorrect ? 'bg-[#4f46e5] text-white' : 'bg-slate-100 text-slate-500'}`}>
+                        {opt}
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder={`Đáp án ${opt}...`} 
+                        className={`flex-1 p-3.5 bg-white border rounded-xl outline-none transition-all ${isCorrect ? 'border-[#4f46e5] bg-indigo-50/10' : 'border-slate-200 focus:border-[#4f46e5]'}`}
+                        value={q[`option_${opt.toLowerCase()}`]}
+                        onChange={e => handleQuestionChange(index, `option_${opt.toLowerCase()}`, e.target.value)}
+                        disabled={q.question_type === 'true_false'} // Khóa ô nhập nếu là câu Đúng/Sai
+                      />
                     </div>
-                    <input 
-                      type="text" 
-                      placeholder={`Đáp án ${opt}...`} 
-                      className="flex-1 p-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#4f46e5] transition-all"
-                      value={q[`option_${opt.toLowerCase()}`]}
-                      onChange={e => handleQuestionChange(index, `option_${opt.toLowerCase()}`, e.target.value)}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Giải thích & Chọn đáp án đúng */}
+              {/* CHỌN ĐÁP ÁN ĐÚNG & GIẢI THÍCH */}
               <div className="flex flex-col md:flex-row gap-6 pt-6 border-t border-slate-100">
-                <div className="md:w-1/3">
-                  <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase">Đáp án đúng</label>
-                  <select 
-                    className="w-full p-3.5 border border-slate-200 rounded-xl outline-none focus:border-[#4f46e5] font-bold text-[#4f46e5] bg-[#f8f9fc] cursor-pointer"
-                    value={q.correct_option}
-                    onChange={e => handleQuestionChange(index, 'correct_option', e.target.value)}
-                  >
-                    <option value="A">Câu A đúng</option>
-                    <option value="B">Câu B đúng</option>
-                    <option value="C">Câu C đúng</option>
-                    <option value="D">Câu D đúng</option>
-                  </select>
+                <div className="md:w-1/2">
+                  <label className="block text-sm font-bold text-[#1e1b4b] mb-3 uppercase flex items-center gap-2">
+                    <CheckSquare size={16} className="text-[#4f46e5]"/> Chọn đáp án đúng
+                  </label>
+                  
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 h-[54px] flex items-center">
+                    {/* UI Chọn nhiều đáp án (Checkboxes) */}
+                    {q.question_type === 'multiple' ? (
+                      <div className="flex gap-4 px-2">
+                        {['A', 'B', 'C', 'D'].map(opt => (
+                          <label key={opt} className="flex items-center gap-2 cursor-pointer font-bold text-slate-700 hover:text-[#4f46e5] transition-colors">
+                            <input 
+                              type="checkbox" 
+                              className="w-4 h-4 accent-[#4f46e5]" 
+                              checked={Array.isArray(q.correct_option) && q.correct_option.includes(opt)} 
+                              onChange={(e) => handleCheckboxChange(index, opt, e.target.checked)} 
+                            />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      /* UI Chọn 1 đáp án (Dropdown) */
+                      <select 
+                        className="w-full bg-transparent outline-none font-bold text-[#4f46e5] cursor-pointer"
+                        value={q.correct_option}
+                        onChange={e => handleQuestionChange(index, 'correct_option', e.target.value)}
+                      >
+                        <option value="A">Câu A đúng</option>
+                        <option value="B">Câu B đúng</option>
+                        {q.question_type !== 'true_false' && <option value="C">Câu C đúng</option>}
+                        {q.question_type !== 'true_false' && <option value="D">Câu D đúng</option>}
+                      </select>
+                    )}
+                  </div>
                 </div>
+
                 <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase">Giải thích (Hiện sau khi nộp bài)</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase">Giải thích (Tùy chọn)</label>
                   <input 
                     type="text" 
                     placeholder="Tại sao đáp án này đúng?" 
