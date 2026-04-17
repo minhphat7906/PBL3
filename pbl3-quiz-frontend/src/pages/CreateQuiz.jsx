@@ -257,7 +257,12 @@ const handleGoBack = () => {
             <div className="flex gap-6">
                 <div className="flex-1">
                   <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Mô tả đề thi</label>
-                  <input type="text" placeholder="Nhập mô tả ngắn..." className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all" value={quizInfo.description} onChange={e => setQuizInfo({...quizInfo, description: e.target.value})} />
+                  <textarea 
+                    placeholder="Nhập mô tả hấp dẫn cho đề thi của bạn..." 
+                    className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all resize-none h-32" 
+                    value={quizInfo.description} 
+                    onChange={e => setQuizInfo({...quizInfo, description: e.target.value})} 
+                  />
                 </div>
                 <div className="w-48">
                   <label className="block text-sm font-bold text-slate-600 mb-2 text-xs uppercase tracking-widest">Thời gian (Phút)</label>

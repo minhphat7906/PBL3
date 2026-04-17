@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Clock, BarChart3, Search, Bell, LogOut, Sparkles, Plus, ChevronRight, Trash2, PencilLine, Loader2 } from 'lucide-react';
+import { Home, BookOpen, Clock, BarChart3, Search, Bell, LogOut, Sparkles, Plus, ChevronRight, Trash2, PencilLine, Loader2, Heart } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import QuizCard from '../components/QuizCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Dashboard = () => {
   // --- 1. STATES ---
   const [quizzes, setQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({ total_created: 0, total_attempts: 0, avg_score: 0, total_favorites: 0 });
   const [activeTab, setActiveTab] = useState('all'); // 'all' hoặc 'mine'
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -37,7 +39,22 @@ const Dashboard = () => {
         setIsLoading(false);
       }
     };
+
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:3000/api/v1/quizzes/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setStats(response.data.stats);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy stats:", error);
+      }
+    };
     fetchQuizzes();
+    fetchStats();
   }, [activeTab]);
 
   // --- 3. LOGIC TÌM KIẾM (Sử dụng useMemo để tối ưu hiệu năng) ---
@@ -120,31 +137,7 @@ const Dashboard = () => {
   );
 
   // Quiz Card Component
-  const renderQuizCard = (quiz) => (
-    <div key={quiz.id} className="group bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-[260px] flex flex-col hover:shadow-lg transition-all relative overflow-hidden">
-      <div className="flex justify-between items-start mb-4">
-        <span className="bg-[#4f46e5]/10 text-[#4f46e5] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-          🕒 {quiz.time_limit} Phút
-        </span>
-        {activeTab === 'mine' && (
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => navigate(`/edit-quiz/${quiz.id}`)} className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg"><PencilLine size={18}/></button>
-            <button onClick={() => handleDelete(quiz.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button>
-          </div>
-        )}
-      </div>
-      <div className="flex-1">
-        <h3 className="font-bold text-slate-900 text-lg mb-2 line-clamp-2">{quiz.title}</h3>
-        <p className="text-sm text-slate-500 line-clamp-2">{quiz.description || "Chưa có mô tả."}</p>
-      </div>
-      <button 
-        onClick={() => navigate(`/play/${quiz.id}`)}
-        className="w-full py-2.5 bg-[#f8f9fc] hover:bg-[#4f46e5] text-[#4f46e5] hover:text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 mt-4"
-      >
-        Vào Thi Ngay <ChevronRight size={16} />
-      </button>
-    </div>
-  );
+  // Không cần renderQuizCard inline nữa, đã dùng QuizCard component từ src/components
 
   return (
     <div className="flex min-h-screen bg-[#f8f9fc] font-sans text-slate-900">
@@ -156,8 +149,8 @@ const Dashboard = () => {
         </div>
         <nav className="flex-1 space-y-2">
           <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-[#4f46e5] text-white font-semibold"><Home size={20} /> Trang chủ</button>
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BookOpen size={20} /> Kho đề thi</button>
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Clock size={20} /> Lịch sử thi</button>
+          <button onClick={() => navigate('/explore')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BookOpen size={20} /> Kho đề thi</button>
+          <button onClick={() => navigate('/history')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Clock size={20} /> Lịch sử thi</button>
           <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BarChart3 size={20} /> Bảng xếp hạng</button>
         </nav>
       </aside>
@@ -203,34 +196,66 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {isLoading ? (
                 Array(4).fill(0).map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 h-[250px] animate-pulse">
-                    <div className="w-20 h-6 bg-slate-100 rounded-full mb-4"></div>
-                    <div className="w-3/4 h-6 bg-slate-100 rounded mb-4"></div>
-                    <div className="w-full h-10 bg-slate-50 rounded-xl mt-auto"></div>
+                  <div key={i} className="bg-white rounded-[24px] border border-slate-100 h-[320px] animate-pulse overflow-hidden flex flex-col">
+                    <div className="h-[160px] w-full bg-slate-200 shrink-0"></div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="w-3/4 h-6 bg-slate-100 rounded-lg mb-3"></div>
+                        <div className="w-1/2 h-6 bg-slate-100 rounded-lg"></div>
+                      </div>
+                      <div className="flex justify-between mt-4">
+                        <div className="w-20 h-6 bg-slate-100 rounded-full"></div>
+                        <div className="w-16 h-6 bg-slate-100 rounded-full"></div>
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : filteredQuizzes.length === 0 ? (
-                <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-slate-200">
-                  <Search size={48} className="mx-auto text-slate-200 mb-4" />
-                  <p className="text-slate-500 font-bold">Không tìm thấy đề thi nào phù hợp!</p>
+                <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-300">
+                  <div className="text-6xl mb-4">🕵️‍♂️ 🐕</div>
+                  <h3 className="text-xl font-black text-slate-700 mb-2">Oops! Không tìm thấy dữ liệu.</h3>
+                  <p className="text-slate-500 font-medium">Bé cún của chúng tôi đã lục tung hệ thống nhưng vẫn không thấy kết quả phù hợp với tìm kiếm của bạn.</p>
                 </div>
               ) : (
-                filteredQuizzes.map(renderQuizCard)
+                filteredQuizzes.map((quiz) => (
+                   <QuizCard 
+                     key={quiz.id} 
+                     quiz={quiz} 
+                     onClick={() => navigate(`/play/${quiz.id}`)}
+                     onPlayClick={() => navigate(`/play/${quiz.id}`)}
+                     showActions={activeTab === 'mine'}
+                     onEdit={(id) => navigate(`/edit-quiz/${id}`)}
+                     onDelete={handleDelete}
+                   />
+                ))
               )}
             </div>
           </section>
 
-          {/* Stats Section (Placeholders) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-             <div className="bg-white p-10 rounded-3xl border border-slate-200 text-center">
-                <Clock className="mx-auto text-slate-200 mb-4" size={48} />
-                <h3 className="font-bold text-slate-700">Tiến độ học tập</h3>
-                <p className="text-slate-400 text-sm">Chưa có dữ liệu thống kê.</p>
+          {/* Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+             <div className="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4"><BookOpen size={32} /></div>
+                <h3 className="font-bold text-slate-500 mb-1">Đề đã tạo</h3>
+                <p className="text-3xl font-black text-slate-800">{stats.total_created}</p>
              </div>
-             <div className="bg-white p-10 rounded-3xl border border-slate-200 text-center">
-                <BarChart3 className="mx-auto text-slate-200 mb-4" size={48} />
-                <h3 className="font-bold text-slate-700">Hoạt động tuần</h3>
-                <p className="text-slate-400 text-sm">Hệ thống đang cập nhật.</p>
+             
+             <div className="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4"><Clock size={32} /></div>
+                <h3 className="font-bold text-slate-500 mb-1">Lượt thi</h3>
+                <p className="text-3xl font-black text-slate-800">{stats.total_attempts}</p>
+             </div>
+
+             <div className="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4"><BarChart3 size={32} /></div>
+                <h3 className="font-bold text-slate-500 mb-1">Điểm trung bình</h3>
+                <p className="text-3xl font-black text-slate-800">{stats.avg_score.toFixed(1)}</p>
+             </div>
+
+             <div className="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4"><Heart fill="currentColor" size={32} /></div>
+                <h3 className="font-bold text-slate-500 mb-1">Yêu thích</h3>
+                <p className="text-3xl font-black text-slate-800">{stats.total_favorites}</p>
              </div>
           </div>
         </div>

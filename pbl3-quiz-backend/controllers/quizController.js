@@ -1,4 +1,5 @@
 const quizService = require('../services/quizService');
+const quizRepository = require('../repositories/quizRepository');
 
 const createQuiz = async (req, res) => {
     try {
@@ -83,4 +84,69 @@ const updateQuiz = async (req, res) => {
     }
 };
 
-module.exports = { createQuiz, deleteQuiz, getAllQuizzes, getQuizById, getQuizzesByUser, submitQuiz, updateQuiz };
+const getExploreQuizzes = async (req, res) => {
+    try {
+        const userId = req.user.id; // Lấy từ token sau khi qua authMiddleware
+        const tab = req.query.tab || 'public';
+        
+        const quizzes = await quizRepository.getExploreQuizzes(userId, tab);
+
+        res.json({ success: true, quizzes });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Lỗi lấy kho đề thi" });
+    }
+};
+
+
+const toggleFavorite = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const quizId = req.params.id;
+        
+        // Gọi hàm từ repository mà mình đã viết ở bước trước
+        const result = await quizRepository.toggleFavorite(userId, quizId);
+        
+        res.json({ success: true, status: result.status });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Lỗi thả tim" });
+    }
+};
+
+
+const getHistory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const history = await quizRepository.getHistoryByUserId(userId);
+        res.json({ success: true, history });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Lỗi lấy lịch sử thi' });
+    }
+};
+
+const getDashboardStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const stats = await quizRepository.getDashboardStats(userId);
+        res.json({ success: true, stats });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Lỗi lấy stats' });
+    }
+};
+
+const getResultDetail = async (req, res) => {
+    try {
+        const resultId = req.params.id;
+        const resultDetail = await quizRepository.getResultById(resultId);
+        if (!resultDetail) return res.status(404).json({ success: false, message: "Không tìm thấy kết quả" });
+        res.json({ success: true, result: resultDetail });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Lỗi lấy chi tiết kết quả' });
+    }
+};
+
+module.exports = { createQuiz, deleteQuiz, getAllQuizzes, getQuizById, getQuizzesByUser, submitQuiz, updateQuiz, getExploreQuizzes, toggleFavorite, getHistory, getDashboardStats, getResultDetail };
+
