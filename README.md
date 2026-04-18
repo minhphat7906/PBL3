@@ -111,3 +111,17 @@ npm install
 
 # Chạy ứng dụng
 npm run dev
+
+```
+🗺️ Lộ Trình Phát Triển (Roadmap)
+[x] Phase 1: Xây dựng Core Flow (Auth, Create Quiz, Take Quiz, History).
+
+[x] Phase 2: Nâng cấp UI/UX (Tailwind, Recharts, Dynamic Covers, PDF Export).
+
+[x] Phase 3: Tích hợp Dữ liệu thật & Gamification (Streaks, Leaderboards).
+
+[ ] Phase 4: Tích hợp AI Quiz Generator (Sắp tới).
+
+[ ] Phase 5: Xây dựng Admin Panel & System Dashboard.
+
+[ ] Phase 6: Đưa dự án lên Cloud (Deployment).
