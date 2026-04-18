@@ -95,3 +95,19 @@ npm install
 
 # Chạy server
 npm start (hoặc node server.js)
+
+2. Cài đặt Database
+Mở SSMS, tạo một Database mới tên pbl3_quiz_final.
+
+Mở file database.sql (nếu có) và chạy (Execute) toàn bộ script để tạo các bảng (users, quizzes, questions, results,...).
+
+3. Cài đặt Frontend
+Bash
+# Di chuyển vào thư mục frontend
+cd pbl3-quiz-frontend
+
+# Cài đặt các thư viện
+npm install
+
+# Chạy ứng dụng
+npm run dev
