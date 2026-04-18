@@ -1,12 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './Login';
-import Register from './Register';
-import Dashboard from './Dashboard';
-import Home from './Home'; // <-- 1. Import trang Home mới tạo
-import CreateQuiz from './CreateQuiz';
-import QuizArena from './QuizArena';
-import EditQuiz from "./EditQuiz";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
+import CreateQuiz from "./pages/CreateQuiz";
+import EditQuiz from "./pages/EditQuiz";
+import QuizArena from "./pages/QuizArena";
+
+import ExplorePage from "./pages/ExplorePage";
+import HistoryPage from "./pages/HistoryPage";
+import ResultDetail from "./pages/ResultDetail";
+import LeaderboardPage from "./pages/LeaderboardPage";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -36,6 +41,32 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>}
+        />
+        {/* Kho đề thi */}
+        <Route 
+          path="/explore" 
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Lịch sử thi */}
+        <Route 
+          path="/history" 
+          element={
+            <ProtectedRoute>
+              <HistoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Bảng xếp hạng */}
+        <Route 
+          path="/leaderboard" 
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
             </ProtectedRoute>
           } 
         />
@@ -57,6 +88,14 @@ function App() {
   } 
 />
 <Route path="/edit-quiz/:id" element={<EditQuiz />} />
+        <Route 
+          path="/result/:resultId" 
+          element={
+            <ProtectedRoute>
+              <ResultDetail />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </Router>
   );
