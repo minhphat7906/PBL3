@@ -11,6 +11,7 @@ import QuizArena from "./pages/QuizArena";
 import ExplorePage from "./pages/ExplorePage";
 import HistoryPage from "./pages/HistoryPage";
 import ResultDetail from "./pages/ResultDetail";
+import LeaderboardPage from "./pages/LeaderboardPage";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -57,6 +58,15 @@ function App() {
           element={
             <ProtectedRoute>
               <HistoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Bảng xếp hạng */}
+        <Route 
+          path="/leaderboard" 
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
             </ProtectedRoute>
           } 
         />

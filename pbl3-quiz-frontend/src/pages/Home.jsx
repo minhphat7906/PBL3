@@ -23,6 +23,9 @@ const Home = () => {
     { icon: <Award className="text-rose-500" />, title: "Câu hỏi chất lượng", desc: "Mỗi câu hỏi đều được chắt lọc kỹ càng.", borderColor: "border-rose-200", bgColor: "bg-rose-50" },
   ];
 
+  const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username') || 'A';
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
       {/* 1. HEADER (Thanh điều hướng) */}
@@ -38,18 +41,36 @@ const Home = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/login')}
-            className="px-5 py-2 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-all"
-          >
-            Đăng nhập
-          </button>
-          <button 
-            onClick={() => navigate('/register')}
-            className="px-5 py-2 rounded-full bg-[#312e81] hover:bg-[#4338ca] text-white font-semibold transition-all shadow-lg"
-          >
-            Đăng ký
-          </button>
+          {token ? (
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-black shadow-sm"
+              >
+                {username.charAt(0).toUpperCase()}
+              </div>
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="px-5 py-2 rounded-full bg-[#312e81] hover:bg-[#4338ca] text-white font-semibold transition-all shadow-lg hidden sm:block"
+              >
+                Đến Dashboard
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => navigate('/login')}
+                className="px-5 py-2 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                Đăng nhập
+              </button>
+              <button 
+                onClick={() => navigate('/register')}
+                className="px-5 py-2 rounded-full bg-[#312e81] hover:bg-[#4338ca] text-white font-semibold transition-all shadow-lg"
+              >
+                Đăng ký
+              </button>
+            </>
+          )}
         </div>
       </nav>
 

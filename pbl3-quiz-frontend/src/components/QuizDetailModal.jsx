@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Heart, Play, User, X, Star, ChevronRight, BarChart3, Clock } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 
 const QuizDetailModal = ({ quiz, onClose, onFavoriteUpdate }) => {
+  const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(quiz.is_favorite === 1);
 
   const handleToggleFavorite = async (e) => {
@@ -66,7 +68,10 @@ const QuizDetailModal = ({ quiz, onClose, onFavoriteUpdate }) => {
           </div>
 
           <div className="flex gap-4">
-            <button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-lg shadow-lg transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={() => navigate(`/play/${quiz.id}`)}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-lg shadow-lg transition-all flex items-center justify-center gap-2"
+            >
               LÀM BÀI NGAY <ChevronRight size={20}/>
             </button>
             <button 

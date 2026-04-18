@@ -93,7 +93,9 @@ const processQuizSubmission = async (userId, quizData) => {
         quiz_id,
         total_points: totalPointsDB,
         correct_answers: correctCount,
-        wrong_answers: wrongCount
+        wrong_answers: wrongCount,
+        time_spent: time_spent || 0,
+        answers_json: JSON.stringify(user_answers || {})
     });
 
     // 4. Trả về cho Frontend

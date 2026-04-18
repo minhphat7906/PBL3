@@ -10,7 +10,6 @@ const gradients = [
 ];
 
 const QuizCard = ({ quiz, onClick, onPlayClick, showActions, onEdit, onDelete }) => {
-  // Chọn màu gradient dựa trên ID để cố định mẫu cho mỗi đề
   const gradientClass = gradients[(quiz.id || 0) % gradients.length];
   
   return (
@@ -20,10 +19,30 @@ const QuizCard = ({ quiz, onClick, onPlayClick, showActions, onEdit, onDelete })
     >
       {/* Top Half: Cover Image / Gradient */}
       <div className={`h-[160px] w-full bg-gradient-to-br ${gradientClass} relative overflow-hidden shrink-0`}>
-        {/* Badge: Time/Questions */}
+        {/* Badge: Time */}
         <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full z-10 shadow-sm">
           {quiz.time_limit} Phút
         </div>
+
+        {/* Hành động (Cho phần Dashboard - Mine tab) */}
+        {showActions && (
+          <div className="absolute top-4 left-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit && onEdit(quiz.id); }} 
+              className="p-2 bg-amber-400/90 hover:bg-amber-400 text-white rounded-xl shadow-md backdrop-blur-sm"
+              title="Chỉnh sửa"
+            >
+              <PencilLine size={16}/>
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDelete && onDelete(quiz.id); }} 
+              className="p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-xl shadow-md backdrop-blur-sm"
+              title="Xóa đề thi"
+            >
+              <Trash2 size={16}/>
+            </button>
+          </div>
+        )}
 
         {/* Hover Overlay with Play Button */}
         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
@@ -38,24 +57,6 @@ const QuizCard = ({ quiz, onClick, onPlayClick, showActions, onEdit, onDelete })
           </button>
         </div>
       </div>
-
-      {/* Hành động (Cho phần Dashboard - Mine tab) */}
-      {showActions && (
-        <div className="absolute top-4 left-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button 
-            onClick={(e) => { e.stopPropagation(); onEdit && onEdit(quiz.id); }} 
-            className="p-2 bg-amber-400/90 hover:bg-amber-400 text-white rounded-xl shadow-md backdrop-blur-sm"
-          >
-            <PencilLine size={16}/>
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete && onDelete(quiz.id); }} 
-            className="p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-xl shadow-md backdrop-blur-sm"
-          >
-            <Trash2 size={16}/>
-          </button>
-        </div>
-      )}
 
       {/* Bottom Half: Info */}
       <div className="p-6 flex flex-col flex-1 bg-white">

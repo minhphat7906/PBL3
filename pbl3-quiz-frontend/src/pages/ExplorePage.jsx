@@ -1,33 +1,138 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Flame, BookOpen, Home, BarChart3, Clock, Heart, User, Search } from 'lucide-react';
+import { BookOpen, Home, BarChart3, Clock, Heart, User, Search, Database, Users, List, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import QuizDetailModal from '../components/QuizDetailModal';
-import QuizCard from '../components/QuizCard';
+import PreviewModal from '../components/PreviewModal';
+import LightQuizCard from '../components/LightQuizCard';
+
+const CustomDropdown = ({ value, onChange, options, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full sm:w-auto flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 text-slate-600 text-sm rounded-xl pl-4 pr-3 py-2.5 font-medium outline-none hover:bg-slate-100 transition-colors"
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <svg className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-[calc(100%+8px)] left-0 w-full sm:min-w-[160px] bg-white border border-slate-100 rounded-xl shadow-lg z-30 py-2 animate-in fade-in zoom-in-95 duration-200">
+          {options.map((opt) => (
+            <div 
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              className={`px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors ${value === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'}`}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ExplorePage = () => {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
+  const [stats, setStats] = useState({ totalQuizzes: 0, totalCategories: 0, totalAuthors: 0 });
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [previewQuizId, setPreviewQuizId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [categoryList, setCategoryList] = useState([]);
+
+  const DEFAULT_CATEGORIES = [
+    'Toán học', 'Văn học', 'Ngoại ngữ', 'Công nghệ thông tin', 
+    'Lịch sử', 'Vật lý', 'Hóa học', 'Sinh học', 'Địa lý', 'Giáo dục công dân', 'Kinh tế', 'Chung'
+  ];
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:3000/api/v1/quizzes/categories', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        const dbCatNames = res.data.categories.map(c => c.name);
+        const merged = [...new Set([...dbCatNames, ...DEFAULT_CATEGORIES])];
+        setCategoryList(merged.map(name => ({ value: name, label: name })));
+      } else {
+        setCategoryList(DEFAULT_CATEGORIES.map(name => ({ value: name, label: name })));
+      }
+    } catch (err) { 
+      console.error(err); 
+      setCategoryList(DEFAULT_CATEGORIES.map(name => ({ value: name, label: name })));
+    }
+  };
+  
   const [activeTab, setActiveTab] = useState('public');
   const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState("all");
+  const [difficulty, setDifficulty] = useState("all");
+  const [sortBy, setSortBy] = useState("latest");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const tabs = [
     { id: 'public', label: 'Cộng đồng', icon: <Search size={18} /> },
     { id: 'mine', label: 'Cá nhân', icon: <User size={18} /> },
-    { id: 'favorites', label: 'Yêu thích', icon: <Heart size={18} /> },
-    { id: 'trending', label: 'Trending', icon: <Flame size={18} /> }
+    { id: 'favorites', label: 'Yêu thích', icon: <Heart size={18} /> }
   ];
 
-  const fetchQuizzes = async (tab) => {
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:3000/api/v1/quizzes/explore/stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setStats(res.data.stats);
+      }
+    } catch (err) {
+      console.error("Lỗi lấy stats:", err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const fetchQuizzes = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:3000/api/v1/quizzes/explore?tab=${tab}`, {
+      const queryParams = new URLSearchParams({
+        tab: activeTab,
+        search: searchTerm,
+        category: category,
+        difficulty: difficulty,
+        sortBy: sortBy,
+        page: page,
+        limit: 12
+      }).toString();
+      
+      const res = await axios.get(`http://localhost:3000/api/v1/quizzes/explore?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setQuizzes(res.data.quizzes);
+      setQuizzes(res.data.quizzes || []);
+      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.error("Lỗi:", err);
     } finally {
@@ -35,16 +140,51 @@ const ExplorePage = () => {
     }
   };
 
-  useEffect(() => { fetchQuizzes(activeTab); }, [activeTab]);
+  useEffect(() => { 
+    fetchStats(); 
+    fetchCategories();
+  }, []);
+
+  useEffect(() => { 
+    // Reset về trang 1 khi đổi bộ lọc
+    setPage(1);
+  }, [activeTab, searchTerm, category, difficulty, sortBy]);
+
+  useEffect(() => { 
+    const delayDebounceFn = setTimeout(() => {
+      fetchQuizzes();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [activeTab, searchTerm, category, difficulty, sortBy, page]);
 
   const handleFavoriteUpdate = (quizId, newStatus) => {
     setQuizzes(prev => prev.map(q => q.id === quizId ? { ...q, is_favorite: newStatus ? 1 : 0 } : q));
   };
 
-  const filteredQuizzes = quizzes.filter(quiz => 
-    quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (quiz.author_name && quiz.author_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: 'Xóa đề thi?',
+      text: "Dữ liệu sẽ mất vĩnh viễn!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Xóa ngay',
+      cancelButtonText: 'Hủy'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`http://localhost:3000/api/v1/quizzes/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          setQuizzes(prev => prev.filter(q => q.id !== id));
+          Swal.fire('Thành công', 'Đề thi đã bị xóa', 'success');
+        } catch (error) {
+          Swal.fire('Lỗi', 'Không thể xóa đề lúc này', 'error');
+        }
+      }
+    });
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f8f9fc] font-sans text-slate-900">
@@ -58,80 +198,186 @@ const ExplorePage = () => {
           <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Home size={20} /> Trang chủ</button>
           <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-[#4f46e5] text-white font-semibold"><BookOpen size={20} /> Kho đề thi</button>
           <button onClick={() => navigate('/history')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Clock size={20} /> Lịch sử thi</button>
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BarChart3 size={20} /> Bảng xếp hạng</button>
+          <button onClick={() => navigate('/leaderboard')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BarChart3 size={20} /> Bảng xếp hạng</button>
         </nav>
       </aside>
 
       <main className="flex-1 ml-64 p-8">
         <div className="max-w-7xl mx-auto">
-        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-black text-slate-900 mb-3">Thư viện Đề thi 📚</h1>
-            <p className="text-slate-500 text-lg mb-8">Khám phá những thử thách mới từ cộng đồng QuizSmart.</p>
+          
+          {/* HERO STATS */}
+          <div className="mb-10">
+            <h1 className="text-4xl font-black text-slate-900 mb-3">Khám phá Kho dữ liệu khổng lồ 🚀</h1>
+            <p className="text-slate-500 text-lg mb-8">Tìm kiếm, luyện tập và chia sẻ những bộ đề chất lượng nhất cùng cộng đồng.</p>
             
-            <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-slate-100 max-w-max gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 flex items-center gap-4">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
+                  <Database size={32} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white/80 font-medium">Tổng số Đề thi</p>
+                  <h3 className="text-3xl font-black">{statsLoading ? "..." : stats.totalQuizzes}</h3>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl p-6 text-white shadow-lg shadow-teal-500/30 flex items-center gap-4">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
+                  <List size={32} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white/80 font-medium">Tổng Chủ đề</p>
+                  <h3 className="text-3xl font-black">{statsLoading ? "..." : stats.totalCategories}</h3>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-rose-400 to-orange-500 rounded-3xl p-6 text-white shadow-lg shadow-orange-500/30 flex items-center gap-4">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
+                  <Users size={32} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white/80 font-medium">Số lượng Tác giả</p>
+                  <h3 className="text-3xl font-black">{statsLoading ? "..." : stats.totalAuthors}</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ADVANCED FILTER BAR */}
+          <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex gap-1.5 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`flex shrink-0 items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#1e1b4b] text-white shadow-xl shadow-indigo-500/20 scale-105' : 'text-slate-500 hover:bg-slate-50 border border-transparent hover:text-indigo-600'}`}
                 >
                   {tab.icon} {tab.label}
                 </button>
               ))}
             </div>
+
+            <div className="flex flex-1 items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Tìm tên đề, tác giả..." 
+                  className="w-full pl-12 pr-4 py-3 bg-[#f8f9fc] border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <CustomDropdown 
+                  value={category} 
+                  onChange={setCategory} 
+                  placeholder="Chọn chủ đề"
+                  options={[{ value: 'all', label: 'Tất cả chủ đề' }, ...categoryList]} 
+                />
+                <CustomDropdown 
+                  value={difficulty} 
+                  onChange={setDifficulty} 
+                  placeholder="Độ khó"
+                  options={[
+                    { value: 'all', label: 'Tất cả độ khó' },
+                    { value: 'Dễ', label: 'Dễ' },
+                    { value: 'Trung bình', label: 'Trung bình' },
+                    { value: 'Khó', label: 'Khó' }
+                  ]} 
+                />
+                <CustomDropdown 
+                  value={sortBy} 
+                  onChange={setSortBy} 
+                  placeholder="Sắp xếp"
+                  options={[
+                    { value: 'latest', label: 'Mới nhất' },
+                    { value: 'popular', label: 'Phổ biến' }
+                  ]} 
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input 
-              className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all shadow-sm font-medium" 
-              type="text" 
-              placeholder="Tìm kiếm theo tiêu đề hoặc tác giả..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </header>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-             {Array(8).fill(0).map((_, i) => (
-                <div key={i} className="bg-white rounded-[24px] border border-slate-100 h-[320px] animate-pulse overflow-hidden flex flex-col">
-                  <div className="h-[160px] w-full bg-slate-200 shrink-0"></div>
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="w-3/4 h-6 bg-slate-100 rounded-lg mb-3"></div>
-                      <div className="w-1/2 h-6 bg-slate-100 rounded-lg"></div>
-                    </div>
-                    <div className="flex justify-between mt-4">
-                      <div className="w-20 h-6 bg-slate-100 rounded-full"></div>
-                      <div className="w-16 h-6 bg-slate-100 rounded-full"></div>
+          {/* QUIZ LIST */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+               {Array(8).fill(0).map((_, i) => (
+                  <div key={i} className="bg-white rounded-[24px] border border-slate-100 h-[380px] animate-pulse overflow-hidden flex flex-col">
+                    <div className="h-[160px] w-full bg-slate-200 shrink-0"></div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="w-3/4 h-6 bg-slate-100 rounded-lg mb-3"></div>
+                        <div className="w-1/2 h-6 bg-slate-100 rounded-lg"></div>
+                      </div>
+                      <div className="flex justify-between mt-4">
+                        <div className="w-full h-10 bg-slate-100 rounded-xl"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-             ))}
-          </div>
-        ) : filteredQuizzes.length === 0 ? (
-          <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-300">
-            <div className="text-6xl mb-4">🕵️‍♂️ 🐕</div>
-            <h3 className="text-xl font-black text-slate-700 mb-2">Oops! Cún cưng tìm quá mệt rồi...</h3>
-            <p className="text-slate-500 font-medium">Chúng tôi không tìm thấy tài liệu phù hợp trong hạng mục này, hãy thử tìm tên tác giả hoặc từ khoá khác nhé.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredQuizzes.map(quiz => (
-              <QuizCard 
-                key={quiz.id} 
-                quiz={quiz} 
-                onClick={() => setSelectedQuiz(quiz)} 
-                onPlayClick={(q) => navigate(`/play/${q.id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+               ))}
+            </div>
+          ) : quizzes.length === 0 ? (
+            <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-300">
+              <div className="text-6xl mb-4">🕵️‍♂️</div>
+              <h3 className="text-xl font-black text-slate-700 mb-2">Không tìm thấy kết quả phù hợp</h3>
+              <p className="text-slate-500 font-medium">Bạn hãy thử điều chỉnh lại bộ lọc hoặc từ khoá tìm kiếm xem sao.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {quizzes.map(quiz => (
+                <LightQuizCard 
+                  key={quiz.id} 
+                  quiz={quiz} 
+                  onClick={() => setSelectedQuiz(quiz)} 
+                  onPlayClick={(q) => navigate(`/play/${q.id}`)}
+                  onPreviewClick={(q) => setPreviewQuizId(q.id)}
+                  showActions={activeTab === 'mine'}
+                  onEdit={(id) => navigate(`/edit-quiz/${id}`)}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
 
+          {/* PAGINATION BAR */}
+          {!loading && totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-2">
+              <button 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronRight size={20} className="rotate-180" />
+              </button>
+              
+              <div className="flex items-center gap-1.5">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pNum = i + 1;
+                  // Logic hiển thị thu gọn nếu quá nhiều trang có thể thêm sau
+                  return (
+                    <button 
+                      key={pNum}
+                      onClick={() => setPage(pNum)}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all shadow-sm ${page === pNum ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-200'}`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
       </main>
       
       {selectedQuiz && (
@@ -139,6 +385,14 @@ const ExplorePage = () => {
           quiz={selectedQuiz} 
           onClose={() => setSelectedQuiz(null)} 
           onFavoriteUpdate={handleFavoriteUpdate}
+        />
+      )}
+
+      {previewQuizId && (
+        <PreviewModal 
+          quizId={previewQuizId}
+          onClose={() => setPreviewQuizId(null)}
+          onPlay={() => navigate(`/play/${previewQuizId}`)}
         />
       )}
     </div>
