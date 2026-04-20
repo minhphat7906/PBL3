@@ -12,6 +12,9 @@ router.get('/history', authMiddleware, quizController.getHistory);
 router.get('/results/:id', authMiddleware, quizController.getResultDetail);
 router.get('/stats', authMiddleware, quizController.getDashboardStats);
 
+// ─── MỚI: MẶT TRẬN 1 - AI API ──────────────────────────────────────────
+router.post('/generate-ai', authMiddleware, quizController.generateAIQuizzes);
+
 // ─── MỚI: Streak, Chart, Leaderboard ────────────────────────────────
 router.get('/streak', authMiddleware, quizController.getStreakInfo);
 router.get('/weekly-activity', authMiddleware, quizController.getWeeklyActivity);

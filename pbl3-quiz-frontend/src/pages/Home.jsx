@@ -49,10 +49,10 @@ const Home = () => {
                 {username.charAt(0).toUpperCase()}
               </div>
               <button 
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/login')}
                 className="px-5 py-2 rounded-full bg-[#312e81] hover:bg-[#4338ca] text-white font-semibold transition-all shadow-lg hidden sm:block"
               >
-                Đến Dashboard
+                Đăng Nhập
               </button>
             </div>
           ) : (

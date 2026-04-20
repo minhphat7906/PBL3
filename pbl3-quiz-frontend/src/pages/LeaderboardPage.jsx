@@ -136,7 +136,7 @@ const LeaderboardPage = () => {
         <div className="max-w-5xl mx-auto">
           {/* HEADER */}
           <div className="mb-8">
-            <h1 className="text-4xl font-black text-slate-900 mb-3">Bảng xếp hạng toàn cầu 🌐</h1>
+            <h1 className="text-4xl font-black text-slate-900 mb-3">Bảng xếp hạng toàn sever 🌐</h1>
             <p className="text-slate-500 text-lg">Khám phá vị trí của bạn so với cộng đồng dựa trên điểm số, sự chăm chỉ và đóng góp.</p>
           </div>
 

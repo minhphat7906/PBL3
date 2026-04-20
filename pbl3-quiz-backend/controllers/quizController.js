@@ -1,5 +1,6 @@
 const quizService = require('../services/quizService');
 const quizRepository = require('../repositories/quizRepository');
+const geminiService = require('../services/geminiService');
 
 const coverImages = {
     'Toán học': [
@@ -250,10 +251,30 @@ const getQuizLeaderboard = async (req, res) => {
     }
 };
 
+// ─── MỚI: MẶT TRẬN 1 - TÍCH HỢP GEMINI API ────────────────────────────
+const generateAIQuizzes = async (req, res) => {
+    try {
+        const { topic, questionCount, difficulty } = req.body;
+        if (!topic) {
+            return res.status(400).json({ success: false, message: "Chủ đề không được để trống" });
+        }
+        
+        const count = questionCount || 10;
+        const diff = difficulty || 'Trung bình';
+
+        const aiQuestions = await geminiService.generateQuizAI(topic, count, diff);
+        res.status(200).json({ success: true, data: aiQuestions });
+    } catch (error) {
+        console.error("Lỗi từ Controller AI:", error);
+        res.status(500).json({ success: false, message: error.message || "Lỗi truy xuất AI" });
+    }
+};
+
 module.exports = { 
     createQuiz, deleteQuiz, getAllQuizzes, getQuizById, getQuizzesByUser, 
     submitQuiz, updateQuiz, getExploreQuizzes, toggleFavorite, getHistory, 
     getDashboardStats, getResultDetail, getExploreStats, getQuizPreview, getCategories,
     // Mới
     getStreakInfo, getWeeklyActivity, getLeaderboard, getQuizLeaderboard,
+    generateAIQuizzes
 };
