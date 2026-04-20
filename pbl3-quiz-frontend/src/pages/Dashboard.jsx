@@ -2,14 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Home, BookOpen, Clock, BarChart3, Search, Bell, LogOut, Sparkles, Plus,
-  ChevronRight, Heart, TrendingUp, Zap, Flame
+  ChevronRight, Heart, TrendingUp, Zap, Flame, Moon, Sun, Quote
 } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import LightQuizCard from '../components/LightQuizCard';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} 
+ from 'recharts';
 
 // ─── Axios helper ─────────────────────────────────────────────────────
 const authAxios = () => {
@@ -39,6 +38,33 @@ const LEADERBOARD_TABS = [
 const Dashboard = () => {
   const navigate = useNavigate();
   const username = localStorage.getItem('username') || 'Người học';
+
+  // Toggle Dark Mode globally
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+  const [quote, setQuote] = useState("Tri thức là sức mạnh.");
+  
+  const quotes = [
+    "Học, học nữa, học mãi. - V.I. Lenin",
+    "Thành công là kết quả của sự kiên trì. - A. Einstein",
+    "Sự đầu tư vào kiến thức mang lợi nhuận cao nhất.",
+    "Trên bước đường thành công không có dấu chân của kẻ lười biếng.",
+    "Ngày hôm nay là học trò của ngày hôm qua."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   const [quizzes, setQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,12 +233,21 @@ const Dashboard = () => {
 
         {/* Header */}
         <header className="flex items-center justify-between pb-5 mb-6 border-b border-slate-200/70">
-          <div className="relative w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm text-sm"
-              type="text" placeholder="Tìm kiếm đề thi..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <div className="flex-1 flex items-center">
+            {/* Quote Banner */}
+            <div className="hidden md:flex items-center border border-indigo-100/50 rounded-full px-5 py-2 bg-indigo-50/50 max-w-lg shadow-inner">
+              <Quote size={16} className="text-amber-500 mr-2 shrink-0 animate-bounce" />
+              <p className="text-sm font-semibold text-slate-600 italic truncate" key={quote}>{quote}</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              title="Chuyển nền"
+            >
+              {isDarkMode ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-slate-600" />}
+            </button>
             <div className="relative p-2 bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
               <Bell className="text-slate-400" size={20} />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-[#f3f4f8]">3</span>
@@ -246,7 +281,10 @@ const Dashboard = () => {
                   className="bg-white/15 hover:bg-white/25 text-white px-5 py-2.5 rounded-xl font-bold border border-white/20 transition-all flex items-center gap-2 text-sm">
                   <Plus size={17} /> Tạo đề
                 </button>
-                <button className="bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 text-white px-5 py-2.5 rounded-xl font-black shadow-lg shadow-pink-500/30 flex items-center gap-2 text-sm hover:shadow-pink-500/50 hover:scale-105 transition-all">
+                <button 
+                  onClick={() => navigate('/create-quiz', { state: { defaultTab: 'ai' } })}
+                  className="bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 text-white px-5 py-2.5 rounded-xl font-black shadow-lg shadow-pink-500/30 flex items-center gap-2 text-sm hover:shadow-pink-500/50 hover:scale-105 transition-all"
+                >
                   <Sparkles size={17} /> Tạo bằng AI
                 </button>
               </div>

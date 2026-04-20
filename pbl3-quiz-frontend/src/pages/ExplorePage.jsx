@@ -395,6 +395,18 @@ const ExplorePage = () => {
           onPlay={() => navigate(`/play/${previewQuizId}`)}
         />
       )}
+
+      {/* TẠO ĐỀ THI FLOATING BUTTON */}
+      <button 
+        onClick={() => navigate('/create-quiz')}
+        className="fixed bottom-8 right-8 z-40 flex items-center gap-3 bg-gradient-to-r from-[#4f46e5] to-purple-500 text-white px-6 py-3.5 rounded-full font-black shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 transition-all group animate-bounce hover:animate-none"
+      >
+        <span className="bg-white/20 p-1.5 rounded-full group-hover:rotate-90 transition-transform">
+          <BookOpen size={18} className="text-white" />
+        </span>
+        Tạo đề thi mới
+      </button>
+
     </div>
   );
 };

@@ -1,1 +1,102 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- Clean and Professional Dark Mode --- */
+
+/* Base backgrounds */
+.dark body,
+.dark .bg-\[\#f3f4f8\],
+.dark .bg-\[\#f8f9fc\] {
+  background-color: #0c0a15 !important;
+  color: #f8fafc !important;
+}
+
+/* Card and Container Backgrounds */
+.dark .bg-white {
+  background-color: #171527 !important;
+  border-color: #2e2b4a !important;
+  color: #f1f5f9 !important;
+}
+
+/* Navigation and Headers */
+.dark header, 
+.dark nav, 
+.dark aside {
+  background-color: #110f1f !important;
+  border-color: #2e2b4a !important;
+}
+
+/* Typography Overrides */
+.dark .text-slate-900, 
+.dark .text-slate-800, 
+.dark .text-\[\#1e1b4b\] {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-700, 
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-500, 
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Borders */
+.dark .border-slate-100, 
+.dark .border-slate-200, 
+.dark .border-slate-300 {
+  border-color: #2e2b4a !important;
+}
+
+/* Form Elements */
+.dark input:not([type="checkbox"]), 
+.dark textarea, 
+.dark select {
+  background-color: #110f1f !important;
+  color: #f8fafc !important;
+  border-color: #2e2b4a !important;
+}
+
+/* Shadows */
+.dark .shadow-sm, 
+.dark .shadow-md, 
+.dark .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Preserving and tweaking specific brand badges in Dark Mode */
+.dark .bg-indigo-50, .dark .bg-indigo-50\/50 {
+  background-color: rgba(67, 56, 202, 0.15) !important;
+  border-color: rgba(67, 56, 202, 0.3) !important;
+}
+
+.dark .bg-amber-50 { 
+  background-color: rgba(245, 158, 11, 0.15) !important; 
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.dark .text-amber-500, .dark .text-amber-600 { 
+  color: #fbbf24 !important; 
+}
+
+.dark .bg-emerald-50 { 
+  background-color: rgba(16, 185, 129, 0.15) !important; 
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark .bg-rose-50 { 
+  background-color: rgba(244, 63, 94, 0.15) !important; 
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}

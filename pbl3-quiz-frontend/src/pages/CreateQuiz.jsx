@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  ArrowLeft, Save, Plus, Trash2, BookOpen, ImageIcon, CheckSquare, Search, ChevronDown, Check 
+  ArrowLeft, Save, Plus, Trash2, BookOpen, ImageIcon, CheckSquare, Search, ChevronDown, Check, Sparkles, Loader2 
 } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2'; 
+import { UploadCloud, FileText } from 'lucide-react';
 
 // ─── Danh sách chủ đề mặc định (Seed) ────────────────────────────────
 const DEFAULT_CATEGORIES = [
@@ -24,6 +25,7 @@ const DEFAULT_CATEGORIES = [
 
 const CreateQuiz = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // State lưu thông tin Đề thi
   const [quizInfo, setQuizInfo] = useState({ 
@@ -34,6 +36,62 @@ const CreateQuiz = () => {
     difficulty: 'Trung bình',
     category: ''
   });
+
+  // State chế độ tạo
+  const [creationMode, setCreationMode] = useState(location.state?.defaultTab || 'manual');
+
+  useEffect(() => {
+    if (location.state?.defaultTab) {
+      setCreationMode(location.state.defaultTab);
+      // Xóa state trên history để refresh không bị dính lại tab AI nếu user đã chuyển về manual
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+  
+  // State AI
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [useDoc, setUseDoc] = useState(false);
+  const [aiQuestionCount, setAiQuestionCount] = useState(10);
+  const [aiDifficulty, setAiDifficulty] = useState('Khó');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateAI = async () => {
+    if (!aiPrompt.trim() && !useDoc) {
+      Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập chủ đề hoặc đính kèm tài liệu!' });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        topic: aiPrompt,
+        questionCount: aiQuestionCount,
+        difficulty: aiDifficulty
+      };
+
+      const response = await axios.post('http://localhost:3000/api/v1/quizzes/generate-ai', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success && Array.isArray(response.data.data)) {
+        // Đổ dữ liệu vào Trạm Kiểm Duyệt
+        setQuestions(response.data.data);
+        Swal.fire({ icon: 'success', title: 'Thành công', text: 'AI đã tạo xong, mời bạn kiểm duyệt!' });
+        
+        // Chuyển tab để Human-in-the-loop
+        setCreationMode('manual');
+      } else {
+        throw new Error("Phản hồi không như mong đợi");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire({ icon: 'error', title: 'Lỗi', text: 'AI quá tải hoặc xảy ra sự cố, vui lòng thử lại!' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   
   // State categories
   const [categories, setCategories] = useState([]);
@@ -223,20 +281,20 @@ const CreateQuiz = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] font-sans text-slate-900 p-8">
+    <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 p-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button onClick={handleGoBack} className="p-2.5 bg-white rounded-full border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors text-slate-600">
+            <button onClick={handleGoBack} className="p-2.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 mt-0 transition-colors text-slate-600 dark:text-slate-300">
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-black text-[#1e1b4b] flex items-center gap-2">
+              <h1 className="text-2xl font-black text-[#1e1b4b] dark:text-white flex items-center gap-2">
                 <BookOpen className="text-[#4f46e5]" size={24} /> Tạo Đề Thi Mới
               </h1>
-              <p className="text-sm text-slate-500">Soạn thảo câu hỏi và đáp án chi tiết</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Soạn thảo câu hỏi và đáp án chi tiết</p>
             </div>
           </div>
           <button onClick={handleSave} className="flex items-center gap-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-md">
@@ -245,11 +303,11 @@ const CreateQuiz = () => {
         </div>
 
         {/* Thông tin chung */}
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 mb-8">
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
           <input 
             type="text" 
             placeholder="Tên đề thi (VD: Bài kiểm tra 15p Toán học)" 
-            className="w-full text-2xl font-bold text-[#1e1b4b] border-b-2 border-slate-100 pb-3 mb-6 outline-none focus:border-[#4f46e5] transition-colors bg-transparent"
+            className="w-full text-2xl font-bold text-[#1e1b4b] dark:text-white border-b-2 border-slate-100 dark:border-slate-700 pb-3 mb-6 outline-none focus:border-[#4f46e5] dark:focus:border-indigo-400 transition-colors bg-transparent placeholder-slate-400"
             value={quizInfo.title}
             onChange={e => setQuizInfo({...quizInfo, title: e.target.value})}
           />
@@ -259,7 +317,7 @@ const CreateQuiz = () => {
                   <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-widest">Mô tả đề thi</label>
                   <textarea 
                     placeholder="Nhập mô tả cho đề thi của bạn..." 
-                    className="w-full p-3.5 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all resize-none h-32" 
+                    className="w-full p-3.5 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 dark:focus:ring-indigo-500/30 focus:border-[#4f46e5] transition-all resize-none h-32 text-slate-900 dark:text-slate-100" 
                     value={quizInfo.description} 
                     onChange={e => setQuizInfo({...quizInfo, description: e.target.value})} 
                   />
@@ -267,11 +325,11 @@ const CreateQuiz = () => {
                 <div className="w-full sm:w-56 flex flex-col gap-6">
                   <div>
                     <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-widest">Thời gian (Phút)</label>
-                    <input type="number" className="w-full p-3 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all font-bold text-[#4f46e5]" value={quizInfo.time_limit} onChange={e => setQuizInfo({...quizInfo, time_limit: parseInt(e.target.value) || 30})} />
+                    <input type="number" className="w-full p-3 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 dark:focus:ring-indigo-500/30 transition-all font-bold text-[#4f46e5] dark:text-indigo-400" value={quizInfo.time_limit} onChange={e => setQuizInfo({...quizInfo, time_limit: parseInt(e.target.value) || 30})} />
                   </div>
                   <div>
                     <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-widest">Độ khó</label>
-                    <select className="w-full p-3 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] transition-all font-bold text-[#4f46e5] cursor-pointer" value={quizInfo.difficulty} onChange={e => setQuizInfo({...quizInfo, difficulty: e.target.value})}>
+                    <select className="w-full p-3 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 dark:focus:ring-indigo-500/30 transition-all font-bold text-[#4f46e5] dark:text-indigo-400 cursor-pointer" value={quizInfo.difficulty} onChange={e => setQuizInfo({...quizInfo, difficulty: e.target.value})}>
                       <option value="Dễ">Dễ</option>
                       <option value="Trung bình">Trung bình</option>
                       <option value="Khó">Khó</option>
@@ -280,24 +338,24 @@ const CreateQuiz = () => {
                   <div className="relative">
                     <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-widest">Chủ đề</label>
                     <div 
-                      className="w-full p-3 bg-[#f8f9fc] border border-slate-200 rounded-xl outline-none focus-within:ring-2 focus-within:ring-[#4f46e5]/20 focus-within:border-[#4f46e5] transition-all font-bold text-[#4f46e5] cursor-pointer flex items-center justify-between"
+                      className="w-full p-3 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus-within:ring-2 focus-within:ring-[#4f46e5]/20 dark:focus-within:ring-indigo-500/30 transition-all font-bold text-[#4f46e5] dark:text-indigo-400 cursor-pointer flex items-center justify-between"
                       onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                     >
-                      <span className={quizInfo.category ? 'text-indigo-600' : 'text-slate-400 font-medium'}>
+                      <span className={quizInfo.category ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 font-medium'}>
                         {quizInfo.category || "Chọn chủ đề..."}
                       </span>
                       <ChevronDown size={18} className={`transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />
                     </div>
 
                     {isCategoryOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden">
-                        <div className="p-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50">
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl z-50 overflow-hidden">
+                        <div className="p-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2 bg-slate-50 dark:bg-slate-900">
                           <Search size={14} className="text-slate-400" />
                           <input 
                             type="text" 
                             autoFocus
                             placeholder="Tìm hoặc gõ mới..." 
-                            className="bg-transparent outline-none text-sm w-full font-medium"
+                            className="bg-transparent outline-none text-sm w-full font-medium dark:text-slate-100 placeholder-slate-400"
                             value={catSearch}
                             onChange={(e) => {
                               setCatSearch(e.target.value);
@@ -339,7 +397,7 @@ const CreateQuiz = () => {
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 transition-all">
+            <div className="flex items-center gap-3 p-4 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-500/30 transition-all">
                 <input 
                     type="checkbox" 
                     id="isPublic"
@@ -347,28 +405,148 @@ const CreateQuiz = () => {
                     checked={quizInfo.is_public}
                     onChange={(e) => setQuizInfo({...quizInfo, is_public: e.target.checked})}
                 />
-                <label htmlFor="isPublic" className="font-bold text-indigo-900 cursor-pointer select-none">
-                    Công khai đề thi <span className="font-normal text-indigo-700/70 ml-1 text-sm">(Mọi người đều có thể tham gia)</span>
+                <label htmlFor="isPublic" className="font-bold text-indigo-900 dark:text-indigo-200 cursor-pointer select-none">
+                    Công khai đề thi <span className="font-normal text-indigo-700/70 dark:text-indigo-400/80 ml-1 text-sm">(Mọi người đều có thể tham gia)</span>
                 </label>
             </div>
           </div>
         </div>
 
+        {/* Tabs chuyển đổi chế độ tạo đề */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-slate-200/50 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
+            <button
+              onClick={() => setCreationMode('manual')}
+              className={`px-6 py-3 rounded-full font-bold text-sm transition-all duration-300 ${
+                creationMode === 'manual'
+                  ? 'bg-white dark:bg-indigo-600 text-indigo-700 dark:text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              ✍️ Tạo thủ công
+            </button>
+            <button
+              onClick={() => setCreationMode('ai')}
+              className={`px-6 py-3 rounded-full font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                creationMode === 'ai'
+                  ? 'bg-white dark:bg-[#1e1b4b] text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 shadow-md border border-indigo-100 dark:border-indigo-500/30'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              ✨ Tạo tự động bằng AI
+            </button>
+          </div>
+        </div>
+
+        {creationMode === 'ai' && (
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mb-10 animate-in fade-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold dark:text-white text-slate-800 mb-2 flex items-center gap-2">
+              <Sparkles className="text-purple-500" /> Trợ lý AI tạo đề
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+              Nhập chủ đề khoa học, bài văn, hoặc tải lên tài liệu học tập. AI sẽ tự động phân tích và sinh ra bài trắc nghiệm chất lượng.
+            </p>
+
+            <div className="space-y-6">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  <BookOpen size={16} className="text-slate-400" /> Chủ đề chi tiết (hoặc đoạn văn bản)
+                </label>
+                <textarea
+                  rows={5}
+                  disabled={isGenerating}
+                  placeholder="VD: Lịch sử thế chiến 2 - Diễn biến chính... Hoặc copy & paste đoạn văn bản vào đây"
+                  className="w-full bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                />
+              </div>
+
+              <div className="bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="text-indigo-500" />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Sử dụng tài liệu đính kèm</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={useDoc} onChange={() => setUseDoc(!useDoc)} disabled={isGenerating}/>
+                    <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                  </label>
+                </div>
+
+                {useDoc && (
+                  <div className="p-6">
+                    <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-400/60 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer group">
+                      <div className="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <UploadCloud size={28} />
+                      </div>
+                      <p className="font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Kéo thả PDF, Word, hoặc file Text vào đây
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hỗ trợ tối đa 3 file, dung lượng &lt; 5MB</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Số lượng câu hỏi</label>
+                  <select 
+                    value={aiQuestionCount}
+                    onChange={(e) => setAiQuestionCount(Number(e.target.value))}
+                    className="w-full bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    disabled={isGenerating}
+                  >
+                    {[5, 10, 15, 20, 30].map(num => <option key={num} value={num}># {num} câu hỏi</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Độ khó</label>
+                  <select
+                    value={aiDifficulty}
+                    onChange={(e) => setAiDifficulty(e.target.value)}
+                    className="w-full bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    disabled={isGenerating}
+                  >
+                    <option value="Dễ">Dễ</option>
+                    <option value="Trung bình">Trung bình</option>
+                    <option value="Khó">Khó</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleGenerateAI}
+                disabled={isGenerating || (!aiPrompt.trim() && !useDoc)}
+                className="w-full mt-2 py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <><Loader2 className="animate-spin" size={24} /> Đang phân tích dữ liệu...</>
+                ) : (
+                  <><Sparkles size={24} /> ✨ Khởi tạo bằng AI (Generate)</>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: creationMode === 'manual' ? 'block' : 'none' }}>
         {/* Danh sách câu hỏi */}
         <div className="space-y-6 mb-10">
           {questions.map((q, index) => (
-            <div key={index} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 relative group animate-in zoom-in duration-300">
-              <div className="absolute -left-4 top-8 bg-[#1e1b4b] text-white w-9 h-9 flex items-center justify-center rounded-full font-bold shadow-md border-2 border-[#f8f9fc]">
+            <div key={index} className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative group animate-in zoom-in duration-300">
+              <div className="absolute -left-4 top-8 bg-[#1e1b4b] dark:bg-indigo-600 text-white w-9 h-9 flex items-center justify-center rounded-full font-bold shadow-md border-2 border-[#f8f9fc] dark:border-slate-900">
                 {index + 1}
               </div>
-              <button onClick={() => handleRemoveQuestion(index)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-red-50 p-2 rounded-full">
+              <button onClick={() => handleRemoveQuestion(index)} className="absolute top-8 right-8 text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity bg-red-50 dark:bg-red-900/20 p-2 rounded-full">
                 <Trash2 size={18} />
               </button>
 
               <div className="mb-6 pt-2">
-                <label className="font-bold text-slate-700 text-sm mr-3">Dạng câu hỏi:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 text-sm mr-3">Dạng câu hỏi:</label>
                 <select 
-                  className="p-2.5 border border-slate-200 rounded-xl outline-none font-bold text-[#4f46e5] bg-indigo-50/50 cursor-pointer"
+                  className="p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-[#4f46e5] dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 cursor-pointer"
                   value={q.question_type || 'single'} 
                   onChange={(e) => handleTypeChange(index, e.target.value)}
                 >
@@ -380,18 +558,18 @@ const CreateQuiz = () => {
 
               <textarea 
                 placeholder="Nhập nội dung câu hỏi..." 
-                className="w-full p-4 bg-[#f8f9fc] border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 focus:border-[#4f46e5] mb-4 resize-none h-28 font-medium"
+                className="w-full p-4 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-[#4f46e5]/20 dark:focus:ring-indigo-500/30 focus:border-[#4f46e5] dark:focus:border-indigo-500 mb-4 resize-none h-28 font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400"
                 value={q.question_text}
                 onChange={e => handleQuestionChange(index, 'question_text', e.target.value)}
               />
 
-              <div className="flex items-center gap-3 mb-6 bg-[#f8f9fc] border border-slate-200 rounded-xl p-2">
+              <div className="flex items-center gap-3 mb-6 bg-[#f8f9fc] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2">
                 <ImageIcon className="text-slate-400 ml-2" size={20} />
-                <input type="text" placeholder="URL hình ảnh..." className="flex-1 p-2 bg-transparent outline-none text-sm" value={q.image_url} onChange={e => handleQuestionChange(index, 'image_url', e.target.value)} />
+                <input type="text" placeholder="URL hình ảnh..." className="flex-1 p-2 bg-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400" value={q.image_url} onChange={e => handleQuestionChange(index, 'image_url', e.target.value)} />
               </div>
 
               {q.image_url && (
-                <div className="mb-6 rounded-xl overflow-hidden border border-slate-200 p-4">
+                <div className="mb-6 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
                   <img src={q.image_url} alt="Preview" className="max-h-48 object-contain rounded-lg shadow-sm" onError={(e) => e.target.style.display = 'none'} />
                 </div>
               )}
@@ -402,13 +580,13 @@ const CreateQuiz = () => {
                   const isCorrect = Array.isArray(q.correct_option) ? q.correct_option.includes(opt) : q.correct_option === opt;
                   return (
                     <div key={opt} className="flex items-center gap-3">
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold ${isCorrect ? 'bg-[#4f46e5] text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold ${isCorrect ? 'bg-[#4f46e5] text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
                         {opt}
                       </div>
                       <input 
                         type="text" 
                         placeholder={`Đáp án ${opt}...`} 
-                        className={`flex-1 p-3.5 bg-white border rounded-xl outline-none ${isCorrect ? 'border-[#4f46e5] bg-indigo-50/10' : 'border-slate-200'}`}
+                        className={`flex-1 p-3.5 bg-white dark:bg-slate-900 border rounded-xl outline-none text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-colors ${isCorrect ? 'border-[#4f46e5] dark:border-indigo-500 bg-indigo-50/10 dark:bg-indigo-900/20' : 'border-slate-200 dark:border-slate-700'}`}
                         value={q[`option_${opt.toLowerCase()}`]}
                         onChange={e => handleQuestionChange(index, `option_${opt.toLowerCase()}`, e.target.value)}
                         disabled={q.question_type === 'true_false'}
@@ -418,23 +596,23 @@ const CreateQuiz = () => {
                 })}
               </div>
 
-              <div className="flex flex-col md:flex-row gap-6 pt-6 border-t border-slate-100">
+              <div className="flex flex-col md:flex-row gap-6 pt-6 border-t border-slate-100 dark:border-slate-700">
                 <div className="md:w-1/2">
-                  <label className="block text-sm font-bold text-[#1e1b4b] mb-3 uppercase flex items-center gap-2">
-                    <CheckSquare size={16} className="text-[#4f46e5]"/> Đáp án đúng
+                  <label className="block text-sm font-bold text-[#1e1b4b] dark:text-indigo-300 mb-3 uppercase flex items-center gap-2">
+                    <CheckSquare size={16} className="text-[#4f46e5] dark:text-indigo-400"/> Đáp án đúng
                   </label>
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center h-[54px]">
+                  <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center h-[54px]">
                     {q.question_type === 'multiple' ? (
                       <div className="flex gap-4 px-2">
                         {['A', 'B', 'C', 'D'].map(opt => (
-                          <label key={opt} className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
-                            <input type="checkbox" className="w-4 h-4 accent-[#4f46e5]" checked={Array.isArray(q.correct_option) && q.correct_option.includes(opt)} onChange={(e) => handleCheckboxChange(index, opt, e.target.checked)} />
+                          <label key={opt} className="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300">
+                            <input type="checkbox" className="w-4 h-4 accent-[#4f46e5] dark:accent-indigo-500" checked={Array.isArray(q.correct_option) && q.correct_option.includes(opt)} onChange={(e) => handleCheckboxChange(index, opt, e.target.checked)} />
                             {opt}
                           </label>
                         ))}
                       </div>
                     ) : (
-                      <select className="w-full bg-transparent outline-none font-bold text-[#4f46e5] cursor-pointer" value={q.correct_option} onChange={e => handleQuestionChange(index, 'correct_option', e.target.value)}>
+                      <select className="w-full bg-transparent outline-none font-bold text-[#4f46e5] dark:text-indigo-400 cursor-pointer" value={q.correct_option} onChange={e => handleQuestionChange(index, 'correct_option', e.target.value)}>
                         <option value="A">Câu A đúng</option>
                         <option value="B">Câu B đúng</option>
                         {q.question_type !== 'true_false' && <option value="C">Câu C đúng</option>}
@@ -445,7 +623,7 @@ const CreateQuiz = () => {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-black text-slate-400 mb-2 uppercase">Giải thích</label>
-                  <input type="text" placeholder="Tại sao đúng?" className="w-full p-3.5 border border-slate-200 rounded-xl outline-none" value={q.explanation} onChange={e => handleQuestionChange(index, 'explanation', e.target.value)} />
+                  <input type="text" placeholder="Tại sao đúng?" className="w-full p-3.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-xl outline-none placeholder-slate-400" value={q.explanation} onChange={e => handleQuestionChange(index, 'explanation', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -454,10 +632,11 @@ const CreateQuiz = () => {
 
         <button 
           onClick={handleAddQuestion} 
-          className="w-full py-5 border-2 border-dashed border-[#4f46e5]/40 text-[#4f46e5] font-black rounded-3xl hover:bg-[#4f46e5] hover:text-white transition-all flex items-center justify-center gap-2 bg-white"
+          className="w-full py-5 border-2 border-dashed border-[#4f46e5]/40 dark:border-indigo-500/40 text-[#4f46e5] dark:text-indigo-400 font-black rounded-3xl hover:bg-[#4f46e5] dark:hover:bg-indigo-600 hover:border-[#4f46e5] dark:hover:border-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2 bg-white dark:bg-slate-800"
         >
           <Plus size={24} /> THÊM CÂU HỎI MỚI
         </button>
+        </div>
       </div>
     </div>
   );
