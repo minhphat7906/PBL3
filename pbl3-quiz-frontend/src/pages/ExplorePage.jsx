@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { BookOpen, Home, BarChart3, Clock, Heart, User, Search, Database, Users, List, ChevronRight } from 'lucide-react';
+import { BookOpen, Search, Heart, User, Database, Users, List, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import QuizDetailModal from '../components/QuizDetailModal';
 import PreviewModal from '../components/PreviewModal';
 import LightQuizCard from '../components/LightQuizCard';
+import Sidebar from '../components/Sidebar';
 
 const CustomDropdown = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -189,18 +190,8 @@ const ExplorePage = () => {
   return (
     <div className="flex min-h-screen bg-[#f8f9fc] font-sans text-slate-900">
       
-      {/* SIDEBAR TƯƠNG TỰ DASHBOARD */}
-      <aside className="w-64 bg-[#1e1b4b] text-white/70 p-6 flex flex-col fixed h-full z-20">
-        <div className="flex items-center gap-2 text-white font-black text-2xl mb-12 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <BookOpen className="text-[#4f46e5]" /> QuizSmart
-        </div>
-        <nav className="flex-1 space-y-2">
-          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Home size={20} /> Trang chủ</button>
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-[#4f46e5] text-white font-semibold"><BookOpen size={20} /> Kho đề thi</button>
-          <button onClick={() => navigate('/history')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Clock size={20} /> Lịch sử thi</button>
-          <button onClick={() => navigate('/leaderboard')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BarChart3 size={20} /> Bảng xếp hạng</button>
-        </nav>
-      </aside>
+      {/* SIDEBAR */}
+      <Sidebar />
 
       <main className="flex-1 ml-64 p-8">
         <div className="max-w-7xl mx-auto">

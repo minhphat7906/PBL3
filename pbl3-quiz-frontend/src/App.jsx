@@ -12,6 +12,9 @@ import ExplorePage from "./pages/ExplorePage";
 import HistoryPage from "./pages/HistoryPage";
 import ResultDetail from "./pages/ResultDetail";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import Profile from "./pages/Profile";
+import HelpPage from "./pages/HelpPage";
+import AdminPage from "./pages/AdminPage";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -88,6 +91,24 @@ function App() {
   } 
 />
 <Route path="/edit-quiz/:id" element={<EditQuiz />} />
+        {/* Profile - of own */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        {/* Profile - of another user */}
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route 
           path="/result/:resultId" 
           element={
@@ -95,6 +116,24 @@ function App() {
               <ResultDetail />
             </ProtectedRoute>
           } 
+        />
+        {/* Help & Support */}
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <HelpPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Admin Panel – self-guarded (checks role inside component) */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </Router>

@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Home, BookOpen, Clock, BarChart3, Search, Bell, LogOut, Sparkles, Plus,
-  ChevronRight, Heart, TrendingUp, Zap, Flame, Moon, Sun, Quote
+  BookOpen, Bell, LogOut, Sparkles, Plus,
+  ChevronRight, Heart, TrendingUp, Zap, Flame, Moon, Sun, Quote,
+  User, CreditCard, Settings, HelpCircle, Crown, ChevronDown
 } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import LightQuizCard from '../components/LightQuizCard';
+import Sidebar from '../components/Sidebar';
+import NotificationDropdown from '../components/NotificationDropdown';
+import QuizDetailModal from '../components/QuizDetailModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} 
  from 'recharts';
 
@@ -20,9 +24,9 @@ const authAxios = () => {
 const ChartTooltip = ({ active, payload, label }) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-xl text-xs">
-        <p className="font-black text-slate-700 mb-0.5">{label}</p>
-        <p className="text-indigo-600 font-bold">{payload[0]?.value} bài làm</p>
+      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl p-3 shadow-xl text-xs">
+        <p className="font-black text-slate-700 dark:text-slate-200 mb-0.5">{label}</p>
+        <p className="text-indigo-600 dark:text-indigo-400 font-bold">{payload[0]?.value} bài làm</p>
       </div>
     );
   }
@@ -76,6 +80,10 @@ const Dashboard = () => {
   const [lbLoading, setLbLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
   // Fetch all data on mount
   useEffect(() => {
@@ -114,10 +122,21 @@ const Dashboard = () => {
       } catch (err) { console.error(err); }
     };
 
+    const fetchNotificationsCount = async () => {
+      try {
+        const res = await api.get('http://localhost:3000/api/v1/notifications');
+        if (res.data.success) {
+          const unread = res.data.notifications.filter(n => !n.is_read).length;
+          setUnreadCount(unread);
+        }
+      } catch (err) { console.error(err); }
+    };
+
     fetchQuizzes();
     fetchStats();
     fetchStreak();
     fetchChart();
+    fetchNotificationsCount();
   }, [activeTab]);
 
   // Fetch leaderboard on tab change
@@ -164,97 +183,179 @@ const Dashboard = () => {
     { label: 'Yêu thích', value: stats.total_favorites, icon: <Heart size={20} fill="currentColor" />, color: 'rose', trend: 'bộ sưu tập' },
   ];
   const colorMap = {
-    indigo: { light: 'bg-indigo-50', text: 'text-indigo-600' },
-    emerald: { light: 'bg-emerald-50', text: 'text-emerald-600' },
-    amber: { light: 'bg-amber-50', text: 'text-amber-600' },
-    rose: { light: 'bg-rose-50', text: 'text-rose-500' },
+    indigo: { light: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
+    emerald: { light: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
+    amber: { light: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
+    rose: { light: 'bg-rose-50 dark:bg-rose-900/30', text: 'text-rose-500 dark:text-rose-400' },
   };
 
   const lbScoreLabel = {
     streak: 'ngày 🔥',
     creators: 'đề',
-    active: 'lượt'
+    active: 'lượt',
   };
 
+  // Header dropdown state
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   return (
-    <div className="flex min-h-screen bg-[#f3f4f8] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-[#f3f4f8] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-200 transition-colors duration-300">
 
       {/* ═══ SIDEBAR ═══ */}
-      <aside className="w-64 bg-[#1e1b4b] text-white/70 p-6 flex flex-col fixed h-full z-30 shadow-2xl">
-        <div className="flex items-center gap-2 text-white font-black text-2xl mb-12 cursor-pointer select-none" onClick={() => navigate('/dashboard')}>
-          <BookOpen className="text-indigo-400" size={26} /> QuizSmart
-        </div>
-        <nav className="flex-1 space-y-1">
-          {[
-            { icon: <Home size={18} />, label: 'Trang chủ', active: true, action: null },
-            { icon: <BookOpen size={18} />, label: 'Kho đề thi', active: false, action: () => navigate('/explore') },
-            { icon: <Clock size={18} />, label: 'Lịch sử thi', active: false, action: () => navigate('/history') },
-            { icon: <BarChart3 size={18} />, label: 'Bảng xếp hạng', active: false, action: null },
-          ].map((item, i) => (
-            <button key={i} onClick={item.action}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold
-                ${item.active ? 'bg-indigo-600/25 text-white border border-indigo-500/30' : 'hover:bg-white/8 hover:text-white'}`}>
-              {item.icon} {item.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Streak Badge in Sidebar */}
-        <div className="mb-4 px-3 py-3 rounded-2xl bg-white/5 border border-white/10">
-          <div className="flex items-center gap-2">
-            <Flame size={22} className={streakInfo.isActiveToday ? 'text-orange-400' : 'text-slate-500'} fill={streakInfo.isActiveToday ? 'currentColor' : 'none'} />
-            <div>
-              <p className="text-white font-black text-lg leading-none">{streakInfo.streak} ngày</p>
-              <p className={`text-[10px] font-bold uppercase tracking-widest ${streakInfo.isActiveToday ? 'text-orange-400' : 'text-slate-500'}`}>
-                {streakInfo.isActiveToday ? '🔥 Đang cháy!' : 'Chưa học hôm nay'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-base shrink-0">
-              {username.charAt(0).toUpperCase()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-white font-bold text-sm truncate">{username}</p>
-              <p className="text-white/40 text-xs">Pro Member</p>
-            </div>
-          </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-all text-sm">
-            <LogOut size={16} /> Đăng xuất
-          </button>
-        </div>
-      </aside>
+      <Sidebar streakInfo={streakInfo} />
 
       {/* ═══ MAIN ═══ */}
       <main className="flex-1 ml-64 p-8 pt-6 overflow-x-hidden">
 
         {/* Header */}
-        <header className="flex items-center justify-between pb-5 mb-6 border-b border-slate-200/70">
+        <header className="flex items-center justify-between pb-5 mb-6 border-b border-slate-200/70 dark:border-slate-700">
           <div className="flex-1 flex items-center">
             {/* Quote Banner */}
-            <div className="hidden md:flex items-center border border-indigo-100/50 rounded-full px-5 py-2 bg-indigo-50/50 max-w-lg shadow-inner">
+            <div className="hidden md:flex items-center border border-indigo-100/50 dark:border-indigo-700/30 rounded-full px-5 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 max-w-lg shadow-inner">
               <Quote size={16} className="text-amber-500 mr-2 shrink-0 animate-bounce" />
-              <p className="text-sm font-semibold text-slate-600 italic truncate" key={quote}>{quote}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 italic truncate" key={quote}>{quote}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               title="Chuyển nền"
             >
               {isDarkMode ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-slate-600" />}
             </button>
-            <div className="relative p-2 bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
-              <Bell className="text-slate-400" size={20} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-[#f3f4f8]">3</span>
+            <div className="relative">
+              <div 
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications) setUnreadCount(0); // Giả lập đánh dấu đã xem khi mở
+                }}
+                className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                title="Thông báo"
+              >
+                <Bell className={unreadCount > 0 ? "text-indigo-600 animate-pulse" : "text-slate-400"} size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-[#f3f4f8] dark:border-slate-800 animate-bounce">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </div>
+              {showNotifications && <NotificationDropdown onClose={() => setShowNotifications(false)} />}
             </div>
-            <div className="flex items-center gap-2.5 bg-white pl-2 pr-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-[#1e1b4b] text-white flex items-center justify-center font-black text-sm">{username.charAt(0).toUpperCase()}</div>
-              <span className="font-bold text-sm text-slate-700">{username}</span>
+            {/* ── User Premium Dropdown ── */}
+            <div className="relative" ref={userMenuRef}>
+              {/* Trigger button */}
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className={`flex items-center gap-2.5 bg-white dark:bg-slate-800 pl-2 pr-3 py-1.5 rounded-full border shadow-sm hover:shadow-md transition-all ${
+                  showUserMenu
+                    ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-400/20'
+                    : 'border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center font-black text-sm">
+                  {username.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-bold text-sm text-slate-700 dark:text-slate-300 hidden sm:block">{username}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Panel */}
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2.5 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+
+                  {/* ── User Info Header ── */}
+                  <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-800 dark:to-indigo-900/10 border-b border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center font-black text-lg shrink-0 ring-2 ring-indigo-400/30">
+                        {username.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">{username}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {JSON.parse(localStorage.getItem('user') || '{}')?.email || 'quizsmart@user.com'}
+                        </p>
+                        <span className="inline-flex items-center gap-1 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full mt-1">
+                          <Crown size={9} fill="currentColor" /> Pro Member
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Group 1: Profile & Plans ── */}
+                  <div className="py-1.5">
+                    <button
+                      onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <User size={15} className="text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold leading-snug">Trang cá nhân</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Xem & chỉnh sửa hồ sơ</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => { setShowUserMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                        <CreditCard size={15} className="text-amber-500 dark:text-amber-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold leading-snug">Quản lý gói cước</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Pro · Gia hạn tháng 5</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* ── Group 2: Settings & Help ── */}
+                  <div className="py-1.5 border-t border-slate-100 dark:border-slate-700">
+                    <button
+                      onClick={() => { setShowUserMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                        <Settings size={15} className="text-slate-500 dark:text-slate-400" />
+                      </div>
+                      <span>Cài đặt hệ thống</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowUserMenu(false); navigate('/help'); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                        <HelpCircle size={15} className="text-emerald-500 dark:text-emerald-400" />
+                      </div>
+                      <span>Trợ giúp & Hỗ trợ</span>
+                    </button>
+                  </div>
+
+                  {/* ── Group Logout ── */}
+                  <div className="py-1.5 border-t border-slate-100 dark:border-slate-700">
+                    <button
+                      onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-semibold"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                        <LogOut size={15} className="text-red-500" />
+                      </div>
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -298,30 +399,30 @@ const Dashboard = () => {
               {statCards.map((s, i) => {
                 const c = colorMap[s.color];
                 return (
-                  <div key={i} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                  <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md dark:hover:bg-slate-700/50 hover:-translate-y-0.5 transition-all duration-200">
                     <div className={`w-10 h-10 ${c.light} ${c.text} rounded-xl flex items-center justify-center mb-3`}>{s.icon}</div>
-                    <p className="text-3xl font-black text-slate-800 mb-0.5">{s.value}</p>
-                    <p className="text-xs font-bold text-slate-500">{s.label}</p>
-                    <p className="text-[10px] text-slate-400 mt-1 font-medium">{s.trend}</p>
+                    <p className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5">{s.value}</p>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{s.label}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium">{s.trend}</p>
                   </div>
                 );
               })}
             </div>
 
             {/* Chart - Dữ liệu thật */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-black text-slate-800 text-sm">Hoạt động tuần</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Số bài thi thực tế 7 ngày qua</p>
+                  <h3 className="font-black text-slate-800 dark:text-slate-200 text-sm">Hoạt động tuần</h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Số bài thi thực tế 7 ngày qua</p>
                 </div>
-                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase ${streakInfo.isActiveToday ? 'bg-orange-50 text-orange-500' : 'bg-slate-50 text-slate-400'}`}>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase ${streakInfo.isActiveToday ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400' : 'bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}>
                   <Flame size={11} fill={streakInfo.isActiveToday ? 'currentColor' : 'none'} /> {streakInfo.streak} ngày
                 </div>
               </div>
               
               {weekData.length === 0 || weekData.reduce((acc, curr) => acc + curr.value, 0) === 0 ? (
-                <div className="flex items-center justify-center h-[160px] text-slate-400 font-medium">Chưa có dữ liệu hoạt động tuần này</div>
+                <div className="flex items-center justify-center h-[160px] text-slate-400 dark:text-slate-500 font-medium">Chưa có dữ liệu hoạt động tuần này</div>
               ) : (
                 <ResponsiveContainer width="100%" height={160}>
                   <AreaChart data={weekData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
@@ -351,13 +452,13 @@ const Dashboard = () => {
             <section className="lg:col-span-2">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-lg font-black text-slate-800">Đề thi đề xuất</h2>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">Những bộ đề chất lượng</p>
+                  <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">Đề thi đề xuất</h2>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">Những bộ đề chất lượng</p>
                 </div>
-                <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                   {[{ id: 'all', label: 'Công khai' }, { id: 'mine', label: 'Của tôi' }].map(t => (
                     <button key={t.id} onClick={() => setActiveTab(t.id)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
                       {t.label}
                     </button>
                   ))}
@@ -367,27 +468,30 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {isLoading ? (
                   Array(4).fill(0).map((_, i) => (
-                    <div key={i} className="bg-white rounded-2xl h-[300px] animate-pulse border border-slate-200">
-                      <div className="h-36 bg-slate-200 rounded-t-2xl"></div>
+                    <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl h-[300px] animate-pulse border border-slate-200 dark:border-slate-700">
+                      <div className="h-36 bg-slate-200 dark:bg-slate-700 rounded-t-2xl"></div>
                       <div className="p-4 space-y-3">
-                        <div className="h-3 bg-slate-100 rounded-full w-1/3"></div>
-                        <div className="h-4 bg-slate-100 rounded-lg w-3/4"></div>
-                        <div className="h-9 bg-slate-100 rounded-xl mt-4"></div>
+                        <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full w-1/3"></div>
+                        <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded-lg w-3/4"></div>
+                        <div className="h-9 bg-slate-100 dark:bg-slate-700 rounded-xl mt-4"></div>
                       </div>
                     </div>
                   ))
                 ) : filteredQuizzes.length === 0 ? (
-                  <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+                  <div className="col-span-full py-16 text-center bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                     <div className="text-5xl mb-3">📭</div>
-                    <p className="text-slate-500 font-bold text-sm">Chưa có đề thi nào.</p>
-                    <button onClick={() => navigate('/create-quiz')} className="mt-4 px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 transition-colors">
+                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">Chưa có đề thi nào.</p>
+                    <button onClick={() => navigate('/create-quiz')} className="mt-4 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors">
                       Tạo đề ngay
                     </button>
                   </div>
                 ) : (
                   filteredQuizzes.slice(0, 4).map(quiz => (
                     <LightQuizCard key={quiz.id} quiz={quiz}
-                      onClick={() => navigate(`/play/${quiz.id}`)}
+                      onClick={() => {
+                        setSelectedQuiz(quiz);
+                        setShowDetailModal(true);
+                      }}
                       onPlayClick={q => navigate(`/play/${q.id}`)}
                       showActions={activeTab === 'mine'}
                       onEdit={id => navigate(`/edit-quiz/${id}`)}
@@ -399,7 +503,7 @@ const Dashboard = () => {
 
               {filteredQuizzes.length > 0 && (
                 <button onClick={() => navigate('/explore')}
-                  className="w-full mt-5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-indigo-700 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group text-sm">
+                  className="w-full mt-5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-400 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group text-sm border border-transparent dark:border-slate-700">
                   Xem tất cả trong Kho đề
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -468,15 +572,15 @@ const Dashboard = () => {
               </div>
 
               {/* QUICK ACTIONS */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <h3 className="font-black text-slate-600 text-[10px] uppercase tracking-widest mb-3">Thao tác nhanh</h3>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                <h3 className="font-black text-slate-600 dark:text-slate-400 text-[10px] uppercase tracking-widest mb-3">Thao tác nhanh</h3>
                 <div className="space-y-1.5">
                   {[
-                    { icon: '✏️', label: 'Tạo đề thi mới', action: () => navigate('/create-quiz'), color: 'hover:bg-indigo-50 hover:text-indigo-700' },
-                    { icon: '📚', label: 'Kho đề thi', action: () => navigate('/explore'), color: 'hover:bg-emerald-50 hover:text-emerald-700' },
-                    { icon: '📋', label: 'Lịch sử thi', action: () => navigate('/history'), color: 'hover:bg-amber-50 hover:text-amber-700' },
+                    { icon: '✏️', label: 'Tạo đề thi mới', action: () => navigate('/create-quiz'), color: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-400' },
+                    { icon: '📚', label: 'Kho đề thi', action: () => navigate('/explore'), color: 'hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400' },
+                    { icon: '📋', label: 'Lịch sử thi', action: () => navigate('/history'), color: 'hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-400' },
                   ].map((item, i) => (
-                    <button key={i} onClick={item.action} className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-600 text-xs font-bold transition-all ${item.color}`}>
+                    <button key={i} onClick={item.action} className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-600 dark:text-slate-300 text-xs font-bold transition-all duration-200 ${item.color}`}>
                       <span className="text-base">{item.icon}</span> {item.label}
                     </button>
                   ))}

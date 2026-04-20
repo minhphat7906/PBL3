@@ -1,6 +1,7 @@
 const quizService = require('../services/quizService');
 const quizRepository = require('../repositories/quizRepository');
 const geminiService = require('../services/geminiService');
+const notificationRepository = require('../repositories/notificationRepository');
 
 const coverImages = {
     'Toán học': [
@@ -45,6 +46,14 @@ const createQuiz = async (req, res) => {
             image_url: randomImage 
         };
         const newQuizId = await quizService.createFullQuiz(quizData);
+        
+        // Gửi thông báo
+        await notificationRepository.createNotification({
+            user_id: req.user.id,
+            type: 'success',
+            content: `Bạn đã tạo thành công đề thi: ${req.body.title}`
+        });
+
         res.status(201).json({ success: true, message: 'Tạo đề thi thành công!', quiz_id: newQuizId });
     } catch (error) {
         console.error("Lỗi tạo quiz:", error);
@@ -95,6 +104,14 @@ const submitQuiz = async (req, res) => {
         const userId = req.user.id; 
         const quizData = req.body;
         const result = await quizService.processQuizSubmission(userId, quizData);
+        
+        // Gửi thông báo kết quả
+        await notificationRepository.createNotification({
+            user_id: userId,
+            type: 'info',
+            content: `Bạn đã hoàn thành bài thi "${result.quizTitle}" với ${result.score.toFixed(0)} điểm!`
+        });
+
         res.status(200).json({ success: true, result });
     } catch (error) {
         console.error("Lỗi chấm điểm:", error);
@@ -251,23 +268,83 @@ const getQuizLeaderboard = async (req, res) => {
     }
 };
 
-// ─── MỚI: MẶT TRẬN 1 - TÍCH HỢP GEMINI API ────────────────────────────
-const generateAIQuizzes = async (req, res) => {
-    try {
-        const { topic, questionCount, difficulty } = req.body;
-        if (!topic) {
-            return res.status(400).json({ success: false, message: "Chủ đề không được để trống" });
-        }
-        
-        const count = questionCount || 10;
-        const diff = difficulty || 'Trung bình';
+// ─── MỚI: MẶT TRẬN 1 - TÍCH HỢP GEMINI API + FILE UPLOAD ─────────────
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 
-        const aiQuestions = await geminiService.generateQuizAI(topic, count, diff);
-        res.status(200).json({ success: true, data: aiQuestions });
-    } catch (error) {
-        console.error("Lỗi từ Controller AI:", error);
-        res.status(500).json({ success: false, message: error.message || "Lỗi truy xuất AI" });
+// Multer: Lưu file vào RAM (buffer), không tốn ổ cứng
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    fileFilter: (req, file, cb) => {
+        const allowed = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/msword',
+            'text/plain'
+        ];
+        if (allowed.includes(file.mimetype)) cb(null, true);
+        else cb(new Error('Chỉ chấp nhận file PDF, Word (.docx), hoặc Text (.txt)'));
     }
+}).single('file'); // Field name phải là 'file'
+
+const generateAIQuizzes = async (req, res) => {
+    // Chạy multer middleware thủ công để xử lý multipart/form-data
+    upload(req, res, async (uploadErr) => {
+        if (uploadErr) {
+            return res.status(400).json({ success: false, message: uploadErr.message });
+        }
+
+        try {
+            const { topic, questionCount, difficulty } = req.body;
+            const count = parseInt(questionCount) || 10;
+            const diff = difficulty || 'Trung bình';
+
+            // ─── Bóc tách văn bản từ file đính kèm ──────────────────
+            let documentText = '';
+            if (req.file) {
+                const { mimetype, buffer } = req.file;
+                console.log(`[AI] Nhận file: ${req.file.originalname} (${mimetype})`);
+
+                if (mimetype === 'application/pdf') {
+                    const parsed = await pdfParse(buffer);
+                    documentText = parsed.text;
+                } else if (
+                    mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                    mimetype === 'application/msword'
+                ) {
+                    const result = await mammoth.extractRawText({ buffer });
+                    documentText = result.value;
+                } else if (mimetype === 'text/plain') {
+                    documentText = buffer.toString('utf-8');
+                }
+
+                // Giới hạn độ dài để không vượt token limit của Gemini
+                if (documentText.length > 15000) {
+                    documentText = documentText.substring(0, 15000) + '\n...(tài liệu đã được cắt ngắn)';
+                }
+                console.log(`[AI] Bóc tách thành công: ${documentText.length} ký tự`);
+            }
+
+            // Nếu không có topic VÀ không có file -> lỗi
+            if (!topic && !documentText) {
+                return res.status(400).json({ success: false, message: "Cần nhập chủ đề hoặc đính kèm tài liệu" });
+            }
+
+            const aiQuestions = await geminiService.generateQuizAI(
+                topic || 'Nội dung từ tài liệu đính kèm',
+                count,
+                diff,
+                documentText
+            );
+            res.status(200).json({ success: true, data: aiQuestions });
+
+        } catch (error) {
+            console.error("Lỗi từ Controller AI:", error);
+            res.status(500).json({ success: false, message: error.message || "Lỗi truy xuất AI" });
+        }
+    });
 };
 
 module.exports = { 

@@ -28,3 +28,14 @@ app.use('/api/v1/auth', authRoutes);
 
 const quizRoutes = require('./routes/quizRoutes');
 app.use('/api/v1/quizzes', quizRoutes);
+
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/v1/users', userRoutes);
+
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/v1/admin', adminRoutes);
+
+// Notifications
+const notificationRoutes = require('./routes/notificationRoutes');
+app.use('/api/v1/notifications', notificationRoutes);
+
