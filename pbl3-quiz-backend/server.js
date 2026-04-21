@@ -38,4 +38,10 @@ app.use('/api/v1/admin', adminRoutes);
 // Notifications
 const notificationRoutes = require('./routes/notificationRoutes');
 app.use('/api/v1/notifications', notificationRoutes);
+
+// Reviews & Reports
+const reviewRoutes = require('./routes/reviewRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/reports', reportRoutes);
 

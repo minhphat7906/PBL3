@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -15,6 +15,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import Profile from "./pages/Profile";
 import HelpPage from "./pages/HelpPage";
 import AdminPage from "./pages/AdminPage";
+import ReviewsPage from "./pages/ReviewsPage";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -132,6 +133,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/reviews"
+          element={
+            <ProtectedRoute>
+              <ReviewsPage />
             </ProtectedRoute>
           }
         />

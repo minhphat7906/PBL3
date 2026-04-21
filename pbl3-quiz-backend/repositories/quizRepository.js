@@ -54,7 +54,6 @@ const getRandomCover = (category) => {
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
-
 // ─── 1. TẠO ĐỀ THI ─────────────────────────────────────────────────────────────
 const createQuiz = async (data, transaction) => {
     const imageUrl = data.image_url || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80&fit=crop';

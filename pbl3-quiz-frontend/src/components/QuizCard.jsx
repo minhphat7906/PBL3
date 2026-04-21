@@ -73,9 +73,9 @@ const QuizCard = ({ quiz, onClick, onPlayClick, showActions, onEdit, onDelete })
           )}
           
           <div className="flex items-center gap-3">
-            {quiz.avg_rating > 0 && (
+            {quiz.average_rating > 0 && (
               <div className="flex items-center text-amber-500 text-sm font-bold bg-amber-50 px-2 py-1 rounded-lg">
-                ★ {quiz.avg_rating.toFixed(1)}
+                ★ {quiz.average_rating.toFixed(1)}
               </div>
             )}
             {quiz.total_attempts !== undefined && (

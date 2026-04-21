@@ -33,30 +33,30 @@ const Toast = ({ message, type, onClose }) => {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon: Icon, label, value, iconColor }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center text-center gap-2 hover:border-slate-600 transition-colors duration-200">
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-slate-700/70 ${iconColor}`}>
-      <Icon className="w-5 h-5" />
+  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 flex flex-col items-center text-center gap-2 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all shadow-sm group">
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform ${iconColor}`}>
+      <Icon className="w-6 h-6" />
     </div>
-    <p className="text-2xl font-bold text-white">{value ?? '—'}</p>
-    <p className="text-xs text-slate-400 font-medium leading-tight">{label}</p>
+    <p className="text-2xl font-black text-slate-900 dark:text-white">{value ?? '—'}</p>
+    <p className="text-xs text-slate-500 dark:text-slate-400 font-bold leading-tight uppercase tracking-widest">{label}</p>
   </div>
 );
 
 // ─── Avatar Component ─────────────────────────────────────────────────────────
 const AvatarDisplay = ({ avatarUrl, username, size = 'lg' }) => {
-  const sizeClass = size === 'lg' ? 'w-28 h-28 text-4xl' : 'w-16 h-16 text-xl';
+  const sizeClass = size === 'lg' ? 'w-32 h-32 text-5xl' : 'w-16 h-16 text-xl';
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={username}
-        className={`${sizeClass} rounded-full object-cover border-4 border-slate-700 ring-2 ring-indigo-500/30`}
+        className={`${sizeClass} rounded-3xl object-cover border-4 border-white dark:border-slate-800 ring-4 ring-indigo-500/10 shadow-xl`}
       />
     );
   }
   const initials = (username || '?').slice(0, 2).toUpperCase();
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center border-4 border-slate-700 ring-2 ring-indigo-500/30 font-bold text-white`}>
+    <div className={`${sizeClass} rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center border-4 border-white dark:border-slate-800 ring-4 ring-indigo-500/10 shadow-xl font-black text-white`}>
       {initials}
     </div>
   );
@@ -234,7 +234,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
+    <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       {/* Inject animation keyframe */}
       <style>{`
         @keyframes slide-in { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -245,17 +245,17 @@ export default function Profile() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* ── Top Nav Bar ── */}
-      <div className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-sm border-b border-slate-800">
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-sm font-medium"
+            className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-bold"
           >
             <ChevronLeft className="w-4 h-4" />
             Quay lại
           </button>
-          <span className="text-sm font-semibold text-slate-300">
-            {isOwnProfile ? 'Trang cá nhân của bạn' : `Hồ sơ của ${profile?.username}`}
+          <span className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">
+            {isOwnProfile ? 'Hồ sơ của tôi' : `Hồ sơ: ${profile?.username}`}
           </span>
           {isOwnProfile ? (
             <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-medium">
@@ -271,9 +271,9 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
         {/* ══ HERO SECTION ══════════════════════════════════════════════════════ */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm transition-colors">
           {/* Banner gradient */}
-          <div className="h-28 bg-gradient-to-r from-indigo-900 via-violet-900 to-slate-800 relative">
+          <div className="h-32 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-900 relative">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(99,102,241,0.25),transparent_60%)]" />
           </div>
 
@@ -302,11 +302,11 @@ export default function Profile() {
                     id="profile-username-input"
                     value={editUsername}
                     onChange={e => setEditUsername(e.target.value)}
-                    className="text-xl font-bold bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-xs"
+                    className="text-xl font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-xs transition-colors"
                     placeholder="Tên hiển thị"
                   />
                 ) : (
-                  <h1 className="text-2xl font-bold text-white">{profile?.username}</h1>
+                  <h1 className="text-3xl font-black text-slate-900 dark:text-white">{profile?.username}</h1>
                 )}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
                   {isOwnProfile && profile?.email && (
@@ -346,9 +346,9 @@ export default function Profile() {
                     <button
                       id="edit-profile-btn"
                       onClick={() => setIsEditingBio(true)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 text-slate-200 rounded-xl text-sm font-medium transition-all"
+                      className="flex items-center gap-1.5 px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-black transition-all shadow-sm"
                     >
-                      <Edit3 className="w-4 h-4" /> Chỉnh sửa
+                      <Edit3 className="w-4 h-4" /> Chỉnh sửa hồ sơ
                     </button>
                   )}
                 </div>
@@ -383,13 +383,13 @@ export default function Profile() {
         <div className={`grid gap-6 ${isOwnProfile ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
 
           {/* ── CỘT TRÁI: Bio Card ── */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col gap-6 shadow-sm transition-colors">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
-                  <User className="w-4 h-4 text-indigo-400" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                  <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h2 className="font-semibold text-white">Giới thiệu</h2>
+                <h2 className="font-black text-slate-900 dark:text-white text-lg">Giới thiệu bản thân</h2>
               </div>
               {!isOwnProfile && (
                 <span className="text-xs bg-slate-700 text-slate-400 px-2.5 py-1 rounded-full border border-slate-600">
@@ -405,7 +405,7 @@ export default function Profile() {
                 onChange={e => setEditBio(e.target.value)}
                 rows={5}
                 maxLength={500}
-                className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed transition-colors"
                 placeholder="Chia sẻ một chút về bản thân bạn... Bạn thích môn gì? Mục tiêu học tập?"
               />
             ) : (

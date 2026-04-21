@@ -1,5 +1,6 @@
 import React from 'react';
-import { Play, User, BookOpen, Tag, Clock, PlayCircle, Heart, Share2, Download } from 'lucide-react';
+import { Play, User, BookOpen, Tag, Clock, PlayCircle, Heart, Share2, Download, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 import html2pdf from 'html2pdf.js';
@@ -16,6 +17,7 @@ const getTagColor = (categoryName) => {
 };
 
 const LightQuizCard = ({ quiz, onClick, onPlayClick, onPreviewClick, showActions, onEdit, onDelete }) => {
+  const navigate = useNavigate();
   const isChung = quiz.category_name === 'Chung';
   const category = (isChung && quiz.category) ? quiz.category : (quiz.category || quiz.category_name || 'Chung');
   const coverUrl = quiz?.image_url || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80&fit=crop';
@@ -127,18 +129,30 @@ const LightQuizCard = ({ quiz, onClick, onPlayClick, onPreviewClick, showActions
             )}
           </div>
           {quiz.author_name && (
-            <div className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-[10px] font-medium" title={`Tác giả: ${quiz.author_name}`}>
-              {quiz.author_avatar ? (
-                <img 
-                  src={quiz.author_avatar} 
-                  alt={quiz.author_name} 
-                  className="w-4 h-4 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700" 
-                />
-              ) : (
-                <div className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[8px] font-black">
-                  {quiz.author_name.charAt(0).toUpperCase()}
-                </div>
+            <div className="flex items-center gap-2">
+              {quiz.average_rating !== undefined && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); navigate(`/quiz/${quiz.id}/reviews`); }}
+                  className="group/rating flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 sm:px-2.5 py-1 rounded-xl border border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:scale-105 transition-all font-black text-[10px] shadow-sm active:scale-95"
+                  title={`${quiz.total_reviews || 0} lượt đánh giá - Bấm để xem chi tiết`}
+                >
+                  <Star size={12} className="group-hover/rating:fill-amber-500 transition-colors shrink-0" fill={quiz.average_rating > 0 ? "currentColor" : "none"} /> 
+                  <span>{Number(quiz.average_rating || 0).toFixed(1)}</span>
+                </button>
               )}
+              <div className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-[10px] font-medium" title={`Tác giả: ${quiz.author_name}`}>
+                {quiz.author_avatar ? (
+                  <img 
+                    src={quiz.author_avatar} 
+                    alt={quiz.author_name} 
+                    className="w-4 h-4 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700" 
+                  />
+                ) : (
+                  <div className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[8px] font-black">
+                    {quiz.author_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

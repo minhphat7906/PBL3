@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import RatingModal from '../components/RatingModal';
+import { Star } from 'lucide-react';
 
 // ─── Component Dropdown tuỳ chỉnh ──────────────────────────────────────────────
 const CustomDropdown = ({ value, onChange, options, placeholder, icon: Icon }) => {
@@ -160,6 +162,7 @@ const HistoryPage = () => {
   const [groupedHistory, setGroupedHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   // ── Filter states ──────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm] = useState('');
@@ -263,8 +266,8 @@ const HistoryPage = () => {
       <main className="flex-1 ml-64 p-8">
         <div className="max-w-7xl mx-auto">
 
-          {/* Header */}
-          <header className="mb-8">
+          {/* Header - Sticky */}
+          <header className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-900/80 backdrop-blur-md pb-6 pt-2 -mx-2 px-2 border-b border-slate-200/50 dark:border-slate-700/50 mb-8">
             <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest mb-3">
               Học tập &amp; Rèn luyện
             </div>
@@ -485,16 +488,31 @@ const HistoryPage = () => {
             </div>
 
             {/* CTA */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex gap-3">
+              <button
+                onClick={() => setShowRatingModal(true)}
+                className="flex-1 py-4 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-black text-sm rounded-2xl border border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all flex items-center justify-center gap-2"
+              >
+                <Star size={18} fill="currentColor" /> ĐÁNH GIÁ
+              </button>
               <button
                 onClick={() => navigate(`/play/${selectedQuiz.quiz_id}`)}
-                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-base rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-3"
+                className="flex-[2] py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-base rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-3"
               >
                 <RefreshCw size={18} /> LÀM LẠI ĐỀ NÀY
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Rating Modal */}
+      {showRatingModal && selectedQuiz && (
+          <RatingModal 
+              quizId={selectedQuiz.quiz_id}
+              quizTitle={selectedQuiz.title}
+              onClose={() => setShowRatingModal(false)}
+          />
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `

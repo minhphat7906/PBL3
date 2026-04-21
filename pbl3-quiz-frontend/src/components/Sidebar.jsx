@@ -147,8 +147,8 @@ const Sidebar = () => {
                 🛡️ Admin
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-400 text-[10px] font-black px-1.5 py-0.5 rounded-full mt-0.5">
-                ✦ Pro Member
+              <span className="text-[10px] font-bold text-white/40 mt-0.5 uppercase tracking-wider">
+                Thành viên
               </span>
             )}
           </div>

@@ -28,19 +28,19 @@ const CustomDropdown = ({ value, onChange, options, placeholder }) => {
     <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full sm:w-auto flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 text-slate-600 text-sm rounded-xl pl-4 pr-3 py-2.5 font-medium outline-none hover:bg-slate-100 transition-colors"
+        className="w-full sm:w-auto flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm rounded-xl pl-4 pr-3 py-2.5 font-bold outline-none hover:border-indigo-400 dark:hover:border-indigo-500 transition-all shadow-sm"
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <svg className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+8px)] left-0 w-full sm:min-w-[160px] bg-white border border-slate-100 rounded-xl shadow-lg z-30 py-2 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-[calc(100%+8px)] left-0 w-full sm:min-w-[180px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-30 py-2 animate-in fade-in zoom-in-95 duration-200">
           {options.map((opt) => (
             <div 
               key={opt.value}
               onClick={() => { onChange(opt.value); setIsOpen(false); }}
-              className={`px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors ${value === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'}`}
+              className={`px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors ${value === opt.value ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
             >
               {opt.label}
             </div>
@@ -188,7 +188,7 @@ const ExplorePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fc] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-[#f8f9fc] dark:bg-slate-950 font-sans text-slate-900 transition-colors duration-300">
       
       {/* SIDEBAR */}
       <Sidebar />
@@ -198,8 +198,8 @@ const ExplorePage = () => {
           
           {/* HERO STATS */}
           <div className="mb-10">
-            <h1 className="text-4xl font-black text-slate-900 mb-3">Khám phá Kho dữ liệu khổng lồ 🚀</h1>
-            <p className="text-slate-500 text-lg mb-8">Tìm kiếm, luyện tập và chia sẻ những bộ đề chất lượng nhất cùng cộng đồng.</p>
+            <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 mb-3">Khám phá Kho dữ liệu khổng lồ 🚀</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8">Tìm kiếm, luyện tập và chia sẻ những bộ đề chất lượng nhất cùng cộng đồng.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 flex items-center gap-4">
@@ -234,14 +234,15 @@ const ExplorePage = () => {
             </div>
           </div>
 
-          {/* ADVANCED FILTER BAR */}
-          <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between">
+          {/* ADVANCED FILTER BAR - Sticky */}
+          <div className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md pb-4 pt-2 -mx-2 px-2">
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 items-center justify-between transition-colors">
             <div className="flex gap-1.5 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex shrink-0 items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#1e1b4b] text-white shadow-xl shadow-indigo-500/20 scale-105' : 'text-slate-500 hover:bg-slate-50 border border-transparent hover:text-indigo-600'}`}
+                  className={`flex shrink-0 items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#1e1b4b] dark:bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 scale-105' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                 >
                   {tab.icon} {tab.label}
                 </button>
@@ -250,11 +251,11 @@ const ExplorePage = () => {
 
             <div className="flex flex-1 items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0">
               <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   type="text" 
                   placeholder="Tìm tên đề, tác giả..." 
-                  className="w-full pl-12 pr-4 py-3 bg-[#f8f9fc] border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-sm"
+                  className="w-full pl-12 pr-4 py-3 bg-[#f8f9fc] dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-sm text-slate-900 dark:text-slate-100"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -290,8 +291,9 @@ const ExplorePage = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* QUIZ LIST */}
+        {/* QUIZ LIST */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                {Array(8).fill(0).map((_, i) => (
@@ -310,10 +312,10 @@ const ExplorePage = () => {
                ))}
             </div>
           ) : quizzes.length === 0 ? (
-            <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-300">
+            <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 transition-colors">
               <div className="text-6xl mb-4">🕵️‍♂️</div>
-              <h3 className="text-xl font-black text-slate-700 mb-2">Không tìm thấy kết quả phù hợp</h3>
-              <p className="text-slate-500 font-medium">Bạn hãy thử điều chỉnh lại bộ lọc hoặc từ khoá tìm kiếm xem sao.</p>
+              <h3 className="text-xl font-black text-slate-700 dark:text-slate-300 mb-2">Không tìm thấy kết quả phù hợp</h3>
+              <p className="text-slate-500 dark:text-slate-500 font-medium">Bạn hãy thử điều chỉnh lại bộ lọc hoặc từ khoá tìm kiếm xem sao.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -338,7 +340,7 @@ const ExplorePage = () => {
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 <ChevronRight size={20} className="rotate-180" />
               </button>
@@ -346,12 +348,11 @@ const ExplorePage = () => {
               <div className="flex items-center gap-1.5">
                 {[...Array(totalPages)].map((_, i) => {
                   const pNum = i + 1;
-                  // Logic hiển thị thu gọn nếu quá nhiều trang có thể thêm sau
                   return (
                     <button 
                       key={pNum}
                       onClick={() => setPage(pNum)}
-                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all shadow-sm ${page === pNum ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-200'}`}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all shadow-sm ${page === pNum ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-indigo-200 dark:hover:border-indigo-700'}`}
                     >
                       {pNum}
                     </button>
@@ -362,7 +363,7 @@ const ExplorePage = () => {
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 <ChevronRight size={20} />
               </button>

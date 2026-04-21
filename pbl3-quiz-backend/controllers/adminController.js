@@ -1,4 +1,6 @@
 const adminRepo = require('../repositories/adminRepository');
+const notificationRepo = require('../repositories/notificationRepository');
+const quizRepo = require('../repositories/quizRepository');
 
 // ── GET /api/v1/admin/stats ──────────────────────────────────────────────────
 const getStats = async (req, res) => {
@@ -36,6 +38,14 @@ const updateRole = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Không thể đổi role của chính mình!' });
         }
         await adminRepo.updateUserRole(+id, role);
+
+        // Thông báo cho người dùng
+        await notificationRepo.createNotification({
+            user_id: +id,
+            type: 'system',
+            content: `Vai trò của bạn đã được quản trị viên cập nhật thành: ${role === 'admin' ? 'Quản trị viên' : 'Thành viên'}`
+        });
+
         res.json({ success: true, message: `Đã đổi role thành ${role}` });
     } catch (err) {
         console.error('Admin updateRole error:', err);
@@ -73,7 +83,19 @@ const getQuizzes = async (req, res) => {
 // ── DELETE /api/v1/admin/quizzes/:id ────────────────────────────────────────
 const deleteQuiz = async (req, res) => {
     try {
-        await adminRepo.deleteQuizAdmin(+req.params.id);
+        const quizId = +req.params.id;
+        const quiz = await quizRepo.getQuizById(quizId);
+        
+        await adminRepo.deleteQuizAdmin(quizId);
+
+        if (quiz) {
+            await notificationRepo.createNotification({
+                user_id: quiz.creator_id,
+                type: 'warning',
+                content: `Bài quiz "${quiz.title}" của bạn đã bị gỡ bỏ bởi quản trị viên.`
+            });
+        }
+
         res.json({ success: true, message: 'Đã xóa bài quiz' });
     } catch (err) {
         console.error('Admin deleteQuiz error:', err);
@@ -84,8 +106,20 @@ const deleteQuiz = async (req, res) => {
 // ── PUT /api/v1/admin/quizzes/:id/toggle-public ──────────────────────────────
 const togglePublic = async (req, res) => {
     try {
+        const quizId = +req.params.id;
         const { is_public } = req.body;
-        await adminRepo.toggleQuizPublic(+req.params.id, is_public ? 1 : 0);
+        const quiz = await quizRepo.getQuizById(quizId);
+
+        await adminRepo.toggleQuizPublic(quizId, is_public ? 1 : 0);
+
+        if (quiz) {
+            await notificationRepo.createNotification({
+                user_id: quiz.creator_id,
+                type: 'info',
+                content: `Quản trị viên đã ${is_public ? 'công khai lại' : 'ẩn'} bài quiz "${quiz.title}" của bạn.`
+            });
+        }
+
         res.json({ success: true, message: is_public ? 'Đã bật công khai' : 'Đã ẩn quiz' });
     } catch (err) {
         console.error('Admin togglePublic error:', err);

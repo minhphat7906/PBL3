@@ -54,11 +54,19 @@ const QuizDetailModal = ({ quiz, onClose, onFavoriteUpdate }) => {
               <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600"><Clock size={20}/></div>
               <div><p className="text-[10px] font-black text-slate-400 uppercase">Thời gian</p><p className="font-bold text-slate-700 text-sm">{quiz.time_limit} phút</p></div>
             </div>
-            <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
-              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-amber-500"><Star size={20}/></div>
-              {/* Dòng code đã được Fix lỗi hiển thị */}
-              <div><p className="text-[10px] font-black text-slate-400 uppercase">Đánh giá</p><p className="font-bold text-slate-700 text-sm">{quiz.avg_rating > 0 ? `${quiz.avg_rating.toFixed(1)} sao` : 'Chưa có'}</p></div>
-            </div>
+            <button 
+              onClick={() => navigate(`/quiz/${quiz.id}/reviews`)}
+              className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2 hover:bg-amber-50 hover:border-amber-200 hover:scale-105 transition-all group active:scale-95 shadow-sm hover:shadow-md"
+              title="Xem tất cả nhận xét"
+            >
+              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all"><Star size={20}/></div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase">Đánh giá</p>
+                <p className="font-bold text-slate-700 text-sm group-hover:text-amber-600">
+                  {quiz.average_rating > 0 ? `${Number(quiz.average_rating).toFixed(1)} sao` : 'Chưa có'}
+                </p>
+              </div>
+            </button>
             <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
               <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-rose-500"><BarChart3 size={20}/></div>
               <div><p className="text-[10px] font-black text-slate-400 uppercase">Lượt làm</p><p className="font-bold text-slate-700 text-sm">{quiz.total_attempts !== undefined ? quiz.total_attempts : '---'}</p></div>
