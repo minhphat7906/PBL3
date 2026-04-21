@@ -63,6 +63,56 @@ const verifyOTP = async (email, otp) => {
     return { success: true, message: "Xác thực thành công! Tài khoản đã được tạo." };
 };
 
+/**
+ * QUÊN MẬT KHẨU - BƯỚC 1: Gửi OTP
+ */
+const forgotPasswordRequest = async (email) => {
+    // 1. Kiểm tra email tồn tại chưa
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+        throw new Error("Email không tồn tại trong hệ thống!");
+    }
+
+    // 2. Sinh mã OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+    // 3. Lưu vào bảng password_resets
+    const passwordResetRepository = require('../repositories/passwordResetRepository');
+    await passwordResetRepository.saveResetOTP(email, otp, expiresAt);
+
+    // 4. Gửi email reset
+    await mailService.sendOTPEmail(email, otp, 'RESET');
+
+    return { message: "Mã OTP khôi phục mật khẩu đã được gửi!" };
+};
+
+/**
+ * QUÊN MẬT KHẨU - BƯỚC 2: Xác thực & Đổi mật khẩu
+ */
+const resetPassword = async (email, otp, newPassword) => {
+    const passwordResetRepository = require('../repositories/passwordResetRepository');
+
+    // 1. Kiểm tra OTP
+    const resetRequest = await passwordResetRepository.findResetRequest(email, otp);
+    if (!resetRequest) {
+        throw new Error("Mã OTP không chính xác hoặc đã hết hạn!");
+    }
+
+    // 2. Băm mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 3. Cập nhật mật khẩu chính thức
+    await userRepository.updatePassword(email, hashedPassword);
+
+    // 4. Xoá yêu cầu reset
+    await passwordResetRepository.deleteResetRequest(email);
+
+    return { success: true, message: "Mật khẩu đã được cập nhật thành công!" };
+};
+
 const login = async (email, password) => {
     // 1. Tìm user
     const user = await userRepository.findByEmail(email);
@@ -85,5 +135,7 @@ const login = async (email, password) => {
 module.exports = { 
     registerRequest, 
     verifyOTP, 
-    login 
+    login,
+    forgotPasswordRequest,
+    resetPassword
 };

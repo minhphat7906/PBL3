@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import HelpPage from "./pages/HelpPage";
 import AdminPage from "./pages/AdminPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -38,6 +39,9 @@ function App() {
         
         {/* Trang Register dời sang địa chỉ '/register' */}
         <Route path="/register" element={<Register />} />
+        
+        {/* Trang Quên mật khẩu */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         
         {/* Dashboard vẫn được bảo mật */}
         <Route 
