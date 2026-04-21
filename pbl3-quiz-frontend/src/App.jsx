@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -12,6 +12,10 @@ import ExplorePage from "./pages/ExplorePage";
 import HistoryPage from "./pages/HistoryPage";
 import ResultDetail from "./pages/ResultDetail";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import Profile from "./pages/Profile";
+import HelpPage from "./pages/HelpPage";
+import AdminPage from "./pages/AdminPage";
+import ReviewsPage from "./pages/ReviewsPage";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -88,6 +92,24 @@ function App() {
   } 
 />
 <Route path="/edit-quiz/:id" element={<EditQuiz />} />
+        {/* Profile - of own */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        {/* Profile - of another user */}
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route 
           path="/result/:resultId" 
           element={
@@ -95,6 +117,32 @@ function App() {
               <ResultDetail />
             </ProtectedRoute>
           } 
+        />
+        {/* Help & Support */}
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <HelpPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Admin Panel – self-guarded (checks role inside component) */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/reviews"
+          element={
+            <ProtectedRoute>
+              <ReviewsPage />
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </Router>

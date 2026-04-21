@@ -1,14 +1,21 @@
 const authService = require('../services/authService');
 
-const register = async (req, res) => {
+const registerRequest = async (req, res) => {
     try {
-        await authService.register(req.body);
-        res.status(201).json({ message: "🎉 Đăng ký tài khoản thành công!" });
+        const data = await authService.registerRequest(req.body);
+        res.status(200).json(data);
     } catch (error) {
-        if (error.number === 2627 || error.message === "Email đã tồn tại!") {
-            return res.status(400).json({ message: "❌ Email hoặc Username đã tồn tại!" });
-        }
-        res.status(500).json({ message: "Lỗi Server!" });
+        res.status(400).json({ message: error.message });
+    }
+};
+
+const verifyOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const data = await authService.verifyOTP(email, otp);
+        res.status(201).json(data);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
 };
 
@@ -22,4 +29,4 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { register, login };
+module.exports = { registerRequest, verifyOTP, login };

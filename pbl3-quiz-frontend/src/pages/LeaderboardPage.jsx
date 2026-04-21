@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { BookOpen, Home, BarChart3, Clock, Search, ChevronRight, Trophy, Flame, Beaker, Medal } from 'lucide-react';
+import { Search, ChevronRight, Trophy, Flame, Medal, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar';
 
 const CustomDropdown = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +64,7 @@ const LeaderboardPage = () => {
   const tabs = [
     { id: 'points', label: 'Top Điểm Số', icon: <Trophy size={18} className="text-amber-500" /> },
     { id: 'streak', label: 'Top Chăm Chỉ', icon: <Flame size={18} className="text-rose-500" /> },
-    { id: 'creators', label: 'Top Sáng Tạo', icon: <Beaker size={18} className="text-emerald-500" /> }
+    { id: 'creators', label: 'Top Sáng Tạo', icon: <Sparkles size={18} className="text-emerald-500" /> }
   ];
 
   useEffect(() => {
@@ -120,17 +121,7 @@ const LeaderboardPage = () => {
   return (
     <div className="flex min-h-screen bg-[#f8f9fc] font-sans text-slate-900">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-[#1e1b4b] text-white/70 p-6 flex flex-col fixed h-full z-20">
-        <div className="flex items-center gap-2 text-white font-black text-2xl mb-12 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <BookOpen className="text-[#4f46e5]" /> QuizSmart
-        </div>
-        <nav className="flex-1 space-y-2">
-          <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Home size={20} /> Trang chủ</button>
-          <button onClick={() => navigate('/explore')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><BookOpen size={20} /> Kho đề thi</button>
-          <button onClick={() => navigate('/history')} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 hover:text-white transition-all"><Clock size={20} /> Lịch sử thi</button>
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-[#4f46e5] text-white font-semibold"><BarChart3 size={20} /> Bảng xếp hạng</button>
-        </nav>
-      </aside>
+      <Sidebar />
 
       <main className="flex-1 ml-64 p-8">
         <div className="max-w-5xl mx-auto">

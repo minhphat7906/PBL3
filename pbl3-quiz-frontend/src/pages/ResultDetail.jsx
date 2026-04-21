@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import RatingModal from '../components/RatingModal';
+import { Star } from 'lucide-react';
 
 const ResultDetail = () => {
     const { resultId } = useParams();
@@ -25,6 +27,7 @@ const ResultDetail = () => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [currentUserRank, setCurrentUserRank] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -59,9 +62,9 @@ const ResultDetail = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#f8f9fc] flex flex-col items-center justify-center text-indigo-600">
+            <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400">
                 <Loader2 className="animate-spin mb-4" size={48} />
-                <h2 className="text-xl font-bold italic">Đang phân tích dữ liệu...</h2>
+                <h2 className="text-xl font-bold italic dark:text-slate-300">Đang phân tích dữ liệu...</h2>
             </div>
         );
     }
@@ -89,19 +92,30 @@ const ResultDetail = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8f9fc] pb-20">
+        <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 pb-20 transition-colors duration-300">
             {/* Header / Nav */}
             <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
                 <button 
                   onClick={() => navigate('/history')}
-                  className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold transition-colors"
+                  className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-semibold transition-colors"
                 >
                     <ChevronLeft size={20} /> Quay lại lịch sử
                 </button>
-                <div className="text-slate-400 font-medium text-sm">
-                    Mã kết quả: #{resultId}
+                <div className="flex items-center gap-3">
+                    <div className="text-slate-400 dark:text-slate-500 font-medium text-sm hidden sm:block">
+                        Mã kết quả: #{resultId}
+                    </div>
                 </div>
             </div>
+
+            {/* Rating Modal */}
+            {showRatingModal && (
+                <RatingModal 
+                    quizId={result.quiz_id}
+                    quizTitle={result.title || "Bài thi"}
+                    onClose={() => setShowRatingModal(false)}
+                />
+            )}
 
             <main className="max-w-6xl mx-auto px-6 space-y-8">
                 
@@ -156,22 +170,37 @@ const ResultDetail = () => {
                     </div>
                 </section>
 
-                {/* ZONE 2: CALL TO ACTION */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button 
                       onClick={() => navigate(`/play/${result.quiz_id}`)}
-                      className="group bg-white p-6 rounded-[32px] border-2 border-slate-100 hover:border-indigo-600 transition-all flex items-center justify-between shadow-sm hover:shadow-xl hover:-translate-y-1"
+                      className="group bg-white dark:bg-slate-900 p-6 rounded-[32px] border-2 border-slate-100 dark:border-slate-800 hover:border-indigo-600 dark:hover:border-indigo-500 transition-all flex items-center justify-between shadow-sm hover:shadow-xl hover:-translate-y-1"
                     >
                         <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[22px] flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                            <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-[22px] flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <RefreshCw size={28} />
                             </div>
                             <div className="text-left">
-                                <h3 className="font-black text-xl text-slate-800">Làm lại bài thi</h3>
-                                <p className="text-slate-500 font-medium text-sm">Cải thiện điểm số ngay bây giờ</p>
+                                <h3 className="font-black text-xl text-slate-800 dark:text-slate-100">Làm lại bài thi</h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Cải thiện điểm số ngay</p>
                             </div>
                         </div>
-                        <ArrowRight size={24} className="text-slate-300 group-hover:text-indigo-600 transition-colors" />
+                        <ArrowRight size={24} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                    </button>
+
+                    <button 
+                      onClick={() => setShowRatingModal(true)}
+                      className="group bg-white dark:bg-slate-900 p-6 rounded-[32px] border-2 border-amber-100 dark:border-amber-900/30 hover:border-amber-500 transition-all flex items-center justify-between shadow-sm hover:shadow-xl hover:-translate-y-1"
+                    >
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-[22px] flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <Star size={28} fill="currentColor" />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="font-black text-xl text-slate-800 dark:text-slate-100">Đánh giá quiz</h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Góp ý để hoàn thiện hơn</p>
+                            </div>
+                        </div>
+                        <ArrowRight size={24} className="text-amber-300 dark:text-amber-600 group-hover:text-amber-500 transition-colors" />
                     </button>
 
                     <button 
@@ -183,7 +212,7 @@ const ResultDetail = () => {
                             </div>
                             <div className="text-left">
                                 <h3 className="font-black text-xl">Xem lại bài giải</h3>
-                                <p className="text-slate-300 font-medium text-sm">Phân tích từng câu hỏi đã làm</p>
+                                <p className="text-slate-300 font-medium text-sm">Phân tích từng câu hỏi</p>
                             </div>
                         </div>
                         <ArrowRight size={24} className="text-white/40 group-hover:text-white transition-colors" />
@@ -194,15 +223,15 @@ const ResultDetail = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* Lưới phân tích câu hỏi (2 cột) */}
-                    <section className="lg:col-span-2 bg-white rounded-[40px] p-8 md:p-10 border border-slate-200 shadow-sm relative overflow-hidden">
+                    <section className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[40px] p-8 md:p-10 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                                <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3">
                                     <Zap className="text-amber-500" fill="currentColor" size={24} /> Lưới phân tích câu hỏi
                                 </h2>
-                                <p className="text-slate-500 font-medium mt-1">Dựa trên hiệu suất làm bài mới nhất của bạn</p>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Dựa trên hiệu suất làm bài mới nhất của bạn</p>
                             </div>
-                            <div className="mt-4 md:mt-0 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shrink-0">
+                            <div className="mt-4 md:mt-0 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold text-sm shrink-0">
                                 Dữ liệu thực tế
                             </div>
                         </div>
@@ -217,18 +246,18 @@ const ResultDetail = () => {
                                 const isWrong = (!isCorrect && !isSkipped);
 
                                 return (
-                                    <div key={q.id} className={`group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-3xl border transition-all cursor-default ${isCorrect ? 'border-emerald-100 bg-emerald-50/30' : isWrong ? 'border-rose-100 bg-rose-50/30' : 'border-slate-100 bg-slate-50'}`}>
+                                    <div key={q.id} className={`group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-3xl border transition-all cursor-default ${isCorrect ? 'border-emerald-100 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/20' : isWrong ? 'border-rose-100 bg-rose-50/30 dark:border-rose-900/40 dark:bg-rose-900/20' : 'border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50'}`}>
                                         <div className="flex items-start md:items-center gap-6">
-                                            <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center font-black ${isCorrect ? 'bg-emerald-100 text-emerald-600' : isWrong ? 'bg-rose-100 text-rose-600' : 'bg-slate-200 text-slate-500'} transition-colors`}>
+                                            <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center font-black ${isCorrect ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : isWrong ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'} transition-colors`}>
                                                 {idx + 1}
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800">{q.question_text}</h4>
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">{q.question_text}</h4>
                                                 <div className="flex flex-wrap gap-2 mt-3">
-                                                    {isCorrect && <span className="text-[10px] font-black uppercase text-emerald-600 border border-emerald-200 px-2.5 py-1 rounded-md bg-emerald-100">Câu Đúng</span>}
-                                                    {isWrong && <span className="text-[10px] font-black uppercase text-rose-600 border border-rose-200 px-2.5 py-1 rounded-md bg-rose-100">Câu Sai</span>}
-                                                    {isSkipped && <span className="text-[10px] font-black uppercase text-slate-600 border border-slate-300 px-2.5 py-1 rounded-md bg-slate-200">Bỏ qua</span>}
-                                                    <span className="text-[10px] font-black uppercase text-slate-400 border border-slate-200 px-2.5 py-1 rounded-md">Độ khó: {q.difficulty || 'Chung'}</span>
+                                                    {isCorrect && <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30">Câu Đúng</span>}
+                                                    {isWrong && <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 px-2.5 py-1 rounded-md bg-rose-100 dark:bg-rose-900/30">Câu Sai</span>}
+                                                    {isSkipped && <span className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-2.5 py-1 rounded-md bg-slate-200 dark:bg-slate-800">Bỏ qua</span>}
+                                                    <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-md">Độ khó: {q.difficulty || 'Chung'}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -242,13 +271,13 @@ const ResultDetail = () => {
                     </section>
 
                     {/* Bảng xếp hạng (1 cột) */}
-                    <section className="bg-white rounded-[40px] p-8 border border-slate-200 shadow-sm flex flex-col">
+                    <section className="bg-white dark:bg-slate-900 rounded-[40px] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
                         <div className="mb-6 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-500 dark:text-amber-400">
                                 <Trophy size={20} fill="currentColor" />
                             </div>
-                            <h2 className="text-xl font-black text-slate-800 leading-tight">
-                                Bảng xếp hạng<br/><span className="text-indigo-600">bài thi này</span>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">
+                                Bảng xếp hạng<br/><span className="text-indigo-600 dark:text-indigo-400">bài thi này</span>
                             </h2>
                         </div>
                         
@@ -259,15 +288,15 @@ const ResultDetail = () => {
                                 <>
                                     {/* Render Top N */}
                                     {leaderboard.map((user, index) => (
-                                        <div key={user.id || index} className={`flex items-center justify-between p-4 rounded-2xl ${index === 0 ? 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-transparent'}`}>
+                                        <div key={user.id || index} className={`flex items-center justify-between p-4 rounded-2xl ${index === 0 ? 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50' : 'bg-slate-50 dark:bg-slate-800/50 border border-transparent dark:border-slate-800'}`}>
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${index === 0 ? 'bg-amber-400 text-white shadow-md' : index === 1 ? 'bg-slate-300 text-slate-700' : index === 2 ? 'bg-orange-300 text-orange-900' : 'bg-slate-200 text-slate-600'} text-xs`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${index === 0 ? 'bg-amber-400 text-white shadow-md' : index === 1 ? 'bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-300' : index === 2 ? 'bg-orange-300 text-orange-900 dark:bg-orange-800/70 dark:text-orange-200' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'} text-xs`}>
                                                     {user.rank}
                                                 </div>
-                                                <div className="font-bold text-slate-800">{user.username}</div>
+                                                <div className="font-bold text-slate-800 dark:text-slate-200">{user.username}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className={`font-black ${index === 0 ? 'text-amber-600' : 'text-slate-600'} text-sm`}>{(user.best_score/10).toFixed(1)} <span className="text-[10px] font-bold text-slate-400">điểm</span></div>
+                                                <div className={`font-black ${index === 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'} text-sm`}>{(user.best_score/10).toFixed(1)} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">điểm</span></div>
                                             </div>
                                         </div>
                                     ))}

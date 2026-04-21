@@ -51,44 +51,85 @@ const CreateQuiz = () => {
   // State AI
   const [aiPrompt, setAiPrompt] = useState("");
   const [useDoc, setUseDoc] = useState(false);
+  const [aiFile, setAiFile] = useState(null); // File object
+  const [isDragging, setIsDragging] = useState(false);
   const [aiQuestionCount, setAiQuestionCount] = useState(10);
   const [aiDifficulty, setAiDifficulty] = useState('Khó');
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // State Progress Modal
+  const [progress, setProgress] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState('');
+
   const handleGenerateAI = async () => {
-    if (!aiPrompt.trim() && !useDoc) {
+    if (!aiPrompt.trim() && !aiFile) {
       Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập chủ đề hoặc đính kèm tài liệu!' });
       return;
     }
 
     setIsGenerating(true);
+    setProgress(0);
+    setLoadingStatus('Đang tải tài liệu lên hệ thống...');
+
+    // ─── Progress Bar giả lập theo giai đoạn ──────────────────────────
+    const stages = [
+      { until: 30, label: 'Đang tải tài liệu lên hệ thống...' },
+      { until: 60, label: 'AI đang đọc và bóc tách kiến thức...' },
+      { until: 88, label: 'Đang biên soạn bộ câu hỏi tối ưu...' },
+    ];
+
+    let currentProgress = 0;
+    const progressInterval = setInterval(() => {
+      currentProgress += 1;
+      const currentStage = stages.find(s => currentProgress <= s.until) || stages[stages.length - 1];
+      setLoadingStatus(currentStage.label);
+      setProgress(Math.min(currentProgress, 88));
+      if (currentProgress >= 88) clearInterval(progressInterval);
+    }, 350); // tăng khoảng 1% mỗi 350ms -> ~30s tổng
+
     try {
       const token = localStorage.getItem('token');
-      const payload = {
-        topic: aiPrompt,
-        questionCount: aiQuestionCount,
-        difficulty: aiDifficulty
-      };
 
-      const response = await axios.post('http://localhost:3000/api/v1/quizzes/generate-ai', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Dùng FormData để gửi cả file lẫn text fields
+      const formData = new FormData();
+      formData.append('topic', aiPrompt);
+      formData.append('questionCount', aiQuestionCount);
+      formData.append('difficulty', aiDifficulty);
+      if (aiFile) formData.append('file', aiFile);
+
+      const response = await axios.post(
+        'http://localhost:3000/api/v1/quizzes/generate-ai',
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } } // axios tự set Content-Type multipart khi dùng FormData
+      );
+
+      clearInterval(progressInterval);
 
       if (response.data.success && Array.isArray(response.data.data)) {
-        // Đổ dữ liệu vào Trạm Kiểm Duyệt
-        setQuestions(response.data.data);
-        Swal.fire({ icon: 'success', title: 'Thành công', text: 'AI đã tạo xong, mời bạn kiểm duyệt!' });
-        
-        // Chuyển tab để Human-in-the-loop
-        setCreationMode('manual');
+        // Ép progress lên 100% rồi mới chuyển tab
+        setProgress(100);
+        setLoadingStatus('Hoàn tất! Đang chuẩn bị dữ liệu kiểm duyệt...');
+
+        setTimeout(() => {
+          setIsGenerating(false);
+          setQuestions(response.data.data);
+          setCreationMode('manual');
+          Swal.fire({
+            icon: 'success',
+            title: `✨ AI đã tạo ${response.data.data.length} câu hỏi!`,
+            text: 'Hãy kiểm duyệt và chỉnh sửa trước khi lưu.',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }, 800);
       } else {
         throw new Error("Phản hồi không như mong đợi");
       }
     } catch (error) {
-      console.error(error);
-      Swal.fire({ icon: 'error', title: 'Lỗi', text: 'AI quá tải hoặc xảy ra sự cố, vui lòng thử lại!' });
-    } finally {
+      clearInterval(progressInterval);
       setIsGenerating(false);
+      console.error(error);
+      Swal.fire({ icon: 'error', title: 'Lỗi', text: error.response?.data?.message || 'AI quá tải hoặc xảy ra sự cố, vui lòng thử lại!' });
     }
   };
 
@@ -474,19 +515,59 @@ const CreateQuiz = () => {
                   </label>
                 </div>
 
-                {useDoc && (
-                  <div className="p-6">
-                    <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-400/60 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer group">
-                      <div className="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform duration-300">
-                        <UploadCloud size={28} />
-                      </div>
-                      <p className="font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Kéo thả PDF, Word, hoặc file Text vào đây
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hỗ trợ tối đa 3 file, dung lượng &lt; 5MB</p>
-                    </div>
+              {useDoc && (
+                <div className="p-6">
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const dropped = e.dataTransfer.files[0];
+                      if (dropped) setAiFile(dropped);
+                    }}
+                    onClick={() => document.getElementById('ai-file-input').click()}
+                    className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group
+                      ${ isDragging 
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-[1.01]' 
+                        : 'border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-400/60'
+                      }`}
+                  >
+                    <input
+                      id="ai-file-input"
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.docx,.doc,.txt"
+                      onChange={(e) => { if (e.target.files[0]) setAiFile(e.target.files[0]); }}
+                    />
+                    {aiFile ? (
+                      <>
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-3 rounded-full mb-3">
+                          <FileText size={28} />
+                        </div>
+                        <p className="font-bold text-slate-700 dark:text-slate-300 mb-1 truncate max-w-xs">{aiFile.name}</p>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{(aiFile.size / 1024).toFixed(1)} KB • Sẵn sàng!</p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setAiFile(null); }}
+                          className="mt-3 text-xs text-rose-500 hover:underline font-semibold"
+                        >
+                          ✕ Xóa file
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform duration-300">
+                          <UploadCloud size={28} />
+                        </div>
+                        <p className="font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Kéo thả PDF, Word, hoặc file Text vào đây
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hoặc click để chọn file • Hỗ trợ .pdf, .docx, .txt • tối đa 10MB</p>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
+              )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -518,14 +599,10 @@ const CreateQuiz = () => {
 
               <button
                 onClick={handleGenerateAI}
-                disabled={isGenerating || (!aiPrompt.trim() && !useDoc)}
+                disabled={isGenerating || (!aiPrompt.trim() && !aiFile)}
                 className="w-full mt-2 py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isGenerating ? (
-                  <><Loader2 className="animate-spin" size={24} /> Đang phân tích dữ liệu...</>
-                ) : (
-                  <><Sparkles size={24} /> ✨ Khởi tạo bằng AI (Generate)</>
-                )}
+                <Sparkles size={24} /> ✨ Khởi tạo bằng AI (Generate)
               </button>
             </div>
           </div>
@@ -638,6 +715,65 @@ const CreateQuiz = () => {
         </button>
         </div>
       </div>
+
+      {/* ═══════ PROGRESS MODAL OVERLAY ═══════ */}
+      {isGenerating && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-md">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 p-10 w-full max-w-md mx-4">
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="relative w-20 h-20">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 animate-spin" style={{ clipPath: 'polygon(50% 0%, 50% 50%, 100% 50%)' }} />
+                <div className="absolute inset-[3px] rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
+                  <Sparkles size={32} className="text-indigo-500" />
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-center text-xl font-black text-slate-800 dark:text-slate-100 mb-1">AI đang làm việc…</h3>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mb-8 min-h-[20px] transition-all">
+              {loadingStatus}
+            </p>
+
+            {/* Progress Bar */}
+            <div className="mb-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tiến độ</span>
+                <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{progress}%</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out relative"
+                  style={{ width: `${progress}%` }}
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            {/* Stage Indicators */}
+            <div className="grid grid-cols-3 gap-2 mt-6">
+              {[
+                { label: 'Tải tài liệu', threshold: 30 },
+                { label: 'AI Phân tích', threshold: 60 },
+                { label: 'Biên soạn', threshold: 88 },
+              ].map((stage, i) => (
+                <div key={i} className={`text-center p-2 rounded-xl transition-all duration-300 ${
+                  progress > stage.threshold
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    : progress > (i === 0 ? 0 : i === 1 ? 30 : 60)
+                      ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-500 animate-pulse'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-400'
+                }`}>
+                  <div className="text-lg mb-0.5">{progress > stage.threshold ? '✅' : i === 0 ? '📄' : i === 1 ? '🧠' : '✍️'}</div>
+                  <div className="text-[10px] font-black uppercase tracking-wide">{stage.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

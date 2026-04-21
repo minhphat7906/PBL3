@@ -25,6 +25,7 @@ const Login = () => {
       // Lưu thông tin vào máy
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', response.data.user.username);
+      localStorage.setItem('user', JSON.stringify(response.data.user)); // Lưu full user object
 
       // Popup thông báo thành công chuyên nghiệp
       Swal.fire({

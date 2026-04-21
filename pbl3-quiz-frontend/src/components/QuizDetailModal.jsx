@@ -43,28 +43,41 @@ const QuizDetailModal = ({ quiz, onClose, onFavoriteUpdate }) => {
           <p className="text-slate-500 mb-8 font-medium">{quiz.description || "Đề thi chất lượng từ cộng đồng."}</p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
-              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-indigo-600"><User size={20}/></div>
-              <div><p className="text-[10px] font-black text-slate-400 uppercase">Tác giả</p><p className="font-bold text-slate-700 text-sm truncate w-24">{quiz.author_name}</p></div>
+            <div 
+              onClick={() => quiz.author_id && navigate(`/profile/${quiz.author_id}`)}
+              className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2 cursor-pointer hover:bg-indigo-50 transition-colors group"
+            >
+              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><User size={20}/></div>
+              <div><p className="text-[10px] font-black text-slate-400 uppercase">Tác giả</p><p className="font-bold text-slate-700 text-sm truncate w-24 group-hover:text-indigo-600">{quiz.author_name}</p></div>
             </div>
             <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
               <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600"><Clock size={20}/></div>
               <div><p className="text-[10px] font-black text-slate-400 uppercase">Thời gian</p><p className="font-bold text-slate-700 text-sm">{quiz.time_limit} phút</p></div>
             </div>
-            <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
-              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-amber-500"><Star size={20}/></div>
-              {/* Dòng code đã được Fix lỗi hiển thị */}
-              <div><p className="text-[10px] font-black text-slate-400 uppercase">Đánh giá</p><p className="font-bold text-slate-700 text-sm">{quiz.avg_rating > 0 ? `${quiz.avg_rating.toFixed(1)} sao` : 'Chưa có'}</p></div>
-            </div>
+            <button 
+              onClick={() => navigate(`/quiz/${quiz.id}/reviews`)}
+              className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2 hover:bg-amber-50 hover:border-amber-200 hover:scale-105 transition-all group active:scale-95 shadow-sm hover:shadow-md"
+              title="Xem tất cả nhận xét"
+            >
+              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all"><Star size={20}/></div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase">Đánh giá</p>
+                <p className="font-bold text-slate-700 text-sm group-hover:text-amber-600">
+                  {quiz.average_rating > 0 ? `${Number(quiz.average_rating).toFixed(1)} sao` : 'Chưa có'}
+                </p>
+              </div>
+            </button>
             <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
               <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm text-rose-500"><BarChart3 size={20}/></div>
               <div><p className="text-[10px] font-black text-slate-400 uppercase">Lượt làm</p><p className="font-bold text-slate-700 text-sm">{quiz.total_attempts !== undefined ? quiz.total_attempts : '---'}</p></div>
             </div>
           </div>
 
-          <div className="mb-6 p-4 border-2 border-dashed border-slate-200 rounded-3xl text-center">
-            <p className="text-slate-500 font-bold mb-1">Mục Xem trước (Preview)</p>
-            <p className="text-sm text-slate-400">Chức năng xem trước danh sách câu hỏi đang phát triển. Sếp có thể bấm Bắt đầu để vô làm ngay luôn!</p>
+          <div className="mb-6 p-6 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[30px]">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2 text-center">Mô tả chi tiết</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed italic">
+              "{quiz.description || "Tác giả chưa để lại mô tả cho bộ đề này, nhưng chắc chắn nó rất thú vị!"}"
+            </p>
           </div>
 
           <div className="flex gap-4">

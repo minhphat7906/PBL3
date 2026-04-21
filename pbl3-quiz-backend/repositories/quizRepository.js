@@ -54,7 +54,6 @@ const getRandomCover = (category) => {
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
-
 // ─── 1. TẠO ĐỀ THI ─────────────────────────────────────────────────────────────
 const createQuiz = async (data, transaction) => {
     const imageUrl = data.image_url || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80&fit=crop';
@@ -123,10 +122,11 @@ const getQuizzesByUserId = async (userId) => {
     const request = new sql.Request();
     request.input('userId', sql.Int, userId);
     const result = await request.query(`
-        SELECT q.*, c.name as category_name,
+        SELECT q.*, u.username as author_name, u.avatar_url as author_avatar, u.id as author_id, c.name as category_name,
         (SELECT COUNT(*) FROM questions qq WHERE qq.quiz_id = q.id) as total_questions
         FROM quizzes q
         LEFT JOIN categories c ON q.category_id = c.id
+        JOIN users u ON q.creator_id = u.id
         WHERE q.creator_id = @userId 
         ORDER BY q.created_at DESC
     `);
@@ -136,7 +136,7 @@ const getQuizzesByUserId = async (userId) => {
 const getAllPublicQuizzes = async () => {
     const request = new sql.Request();
     const result = await request.query(`
-        SELECT q.*, u.username as author_name, c.name as category_name,
+        SELECT q.*, u.username as author_name, u.avatar_url as author_avatar, u.id as author_id, c.name as category_name,
         (SELECT COUNT(*) FROM questions qq WHERE qq.quiz_id = q.id) as total_questions,
         (SELECT COUNT(*) FROM results r WHERE r.quiz_id = q.id) as total_attempts
         FROM quizzes q
@@ -152,7 +152,12 @@ const getAllPublicQuizzes = async () => {
 const getQuizById = async (quizId) => {
     const request = new sql.Request();
     request.input('id', sql.Int, quizId);
-    const result = await request.query(`SELECT * FROM quizzes WHERE id = @id`);
+    const result = await request.query(`
+        SELECT q.*, u.username as author_name, u.avatar_url as author_avatar, u.id as author_id
+        FROM quizzes q
+        JOIN users u ON q.creator_id = u.id
+        WHERE q.id = @id
+    `);
     return result.recordset[0];
 };
 
@@ -311,7 +316,7 @@ const getExploreQuizzes = async (userId, filters = {}) => {
     let orderBy = sortBy === 'popular' ? 'ORDER BY total_attempts DESC' : 'ORDER BY q.created_at DESC';
 
     const query = `
-        SELECT q.*, u.username as author_name, c.name as category_name,
+        SELECT q.*, u.username as author_name, u.avatar_url as author_avatar, u.id as author_id, c.name as category_name,
         COUNT(*) OVER() as total_count,
         (SELECT COUNT(*) FROM favorites f WHERE f.quiz_id = q.id) as total_likes,
         (SELECT COUNT(*) FROM questions qq WHERE qq.quiz_id = q.id) as total_questions,
@@ -352,6 +357,7 @@ const getHistoryByUserId = async (userId) => {
         ORDER BY r.completed_at DESC
     `);
 
+    const groupedOrder = [];
     const grouped = {};
     result.recordset.forEach(r => {
         if (!grouped[r.quiz_id]) {
@@ -360,6 +366,7 @@ const getHistoryByUserId = async (userId) => {
                 image_url: r.image_url, total_questions: r.total_questions,
                 attempt_count: 0, best_score: 0, attempts_list: []
             };
+            groupedOrder.push(r.quiz_id);
         }
         grouped[r.quiz_id].attempt_count += 1;
         if (r.total_points > grouped[r.quiz_id].best_score) grouped[r.quiz_id].best_score = r.total_points;
@@ -368,7 +375,7 @@ const getHistoryByUserId = async (userId) => {
             wrong_answers: r.wrong_answers, completed_at: r.completed_at
         });
     });
-    return Object.values(grouped);
+    return groupedOrder.map(id => grouped[id]);
 };
 
 // ─── 10. STATS dashboard ─────────────────────────────────────────────────────────
@@ -494,6 +501,18 @@ const getLeaderboard = async (type = 'streak', limit = 10, filters = {}) => {
             INNER JOIN results r ON r.user_id = u.id
             INNER JOIN quizzes q ON r.quiz_id = q.id
             ${baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : ''}
+            GROUP BY u.id, u.username
+            ORDER BY score DESC
+        `;
+        return (await request.query(query)).recordset;
+    } else if (type === 'active') {
+        // Cày cuốc: total number of quiz attempts (results count)
+        const whereClause = baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : '';
+        const query = `
+            SELECT TOP (@lim) u.id, u.username, COUNT(r.id) as score
+            FROM users u
+            INNER JOIN results r ON r.user_id = u.id
+            ${whereClause}
             GROUP BY u.id, u.username
             ORDER BY score DESC
         `;

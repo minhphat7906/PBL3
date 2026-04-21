@@ -98,8 +98,18 @@ const processQuizSubmission = async (userId, quizData) => {
         answers_json: JSON.stringify(user_answers || {})
     });
 
-    // 4. Trả về cho Frontend
-    return { score: parseFloat(scoreUI), correctCount, totalQuestions, time_spent };
+    // 4. Lấy tiêu đề để báo cáo (hoặc cho Notification)
+    const quizResult = await quizRepository.getQuizById(quiz_id);
+    const quizTitle = quizResult ? quizResult.title : "Bộ đề";
+
+    // 5. Trả về cho Frontend
+    return { 
+        score: parseFloat(scoreUI), 
+        correctCount, 
+        totalQuestions, 
+        time_spent,
+        quizTitle
+    };
 };
 
 const updateFullQuiz = async (quizId, quizData) => {
