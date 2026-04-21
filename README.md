@@ -122,8 +122,8 @@ npm run dev
 
 [x] Phase 3: Tích hợp Dữ liệu thật & Gamification (Streaks, Leaderboards).
 
-[ ] Phase 4: Tích hợp AI Quiz Generator (Sắp tới).
+[X] Phase 4: Tích hợp AI Quiz Generator (Sắp tới).
 
-[ ] Phase 5: Xây dựng Admin Panel & System Dashboard.
+[X] Phase 5: Xây dựng Admin Panel & System Dashboard.
 
 [ ] Phase 6: Đưa dự án lên Cloud (Deployment).
