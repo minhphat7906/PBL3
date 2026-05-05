@@ -1,0 +1,68 @@
+# 📖 CẨM NANG PHÂN TÍCH CODE & TRẢ LỜI CÂU HỎI HỘI ĐỒNG (PBL3)
+
+Đây là tài liệu "bí mật" giúp em nắm rõ toàn bộ nội tại hệ thống. Khi thầy cô hỏi "Đoạn này hoạt động thế nào?", "Tại sao em code như vậy?", em chỉ cần dựa vào các ý chính dưới đây để tự tin trả lời.
+
+---
+
+## 1. Kiến Trúc Tổng Thể (3-Layer Architecture)
+Hệ thống Backend được thiết kế theo chuẩn **3-Layer (3 tầng)**. Lợi ích lớn nhất là "Tách biệt trách nhiệm" (Separation of Concerns), giúp code dễ bảo trì và mở rộng.
+
+*   **Tầng 1: Routes & Controllers (Tiếp tân)**
+    *   Nhiệm vụ: Chặn bắt request từ Frontend, kiểm tra quyền (Middleware JWT), sau đó giao cho Controller.
+    *   Controller chỉ làm đúng 1 việc: Gói gém dữ liệu (`req.body`, `req.params`) và gọi tầng Service. Trả về JSON cho Client. KHÔNG chứa logic nghiệp vụ phức tạp.
+*   **Tầng 2: Services (Não bộ - Logic Nghiệp vụ)**
+    *   Ví dụ: `quizService.js`, `geminiService.js`.
+    *   Nhiệm vụ: Chứa toàn bộ "não bộ" của dự án (Chấm điểm bài thi, bóc tách AI, tính toán logic). Tầng này hoàn toàn không biết gì về HTTP (không có `req`, `res`).
+*   **Tầng 3: Repositories (Nhân viên kho - Tương tác Database)**
+    *   Ví dụ: `quizRepository.js`.
+    *   Nhiệm vụ: Chứa 100% các câu lệnh SQL. Nếu sau này đổi từ SQL Server sang MySQL, em chỉ việc viết lại tầng Repository, tầng Service và Controller giữ nguyên!
+
+---
+
+## 2. Luồng Khởi Tạo Đề Thi Bằng AI (Tính năng cốt lõi)
+Nếu thầy cô hỏi: *"Hệ thống của em đọc file và sinh đề thi bằng AI như thế nào?"*
+
+**Trả lời theo luồng (5 bước):**
+1.  **Nhận File (Multer):** Khi user upload PDF/Word, Backend dùng thư viện `multer` (chế độ `diskStorage`) để đón lấy file và lưu tạm vào ổ cứng (`/uploads`), tránh việc file quá lớn làm tràn RAM Server.
+2.  **Bóc tách văn bản (Text Extraction):** Dùng `pdf-parse` (cho PDF) hoặc `mammoth` (cho Word .docx) để hút toàn bộ chữ (text) ra khỏi file.
+3.  **Gọi Google Gemini AI:** Gọi hàm `geminiService.generateQuizAI`. Ở đây, em truyền vào một **Prompt rất khắt khe**:
+    *   Bắt buộc AI chỉ trả về định dạng **Mảng JSON**.
+    *   Cấm thêm các câu chào hỏi thừa thãi.
+4.  **Chống Treo (Timeout) & Fallback:** 
+    *   Dùng `Promise.race` ép AI phải trả lời trong vòng 15 giây, nếu không sẽ timeout (bảo vệ hệ thống).
+    *   Nếu model `gemini-1.5-flash` bị lỗi (quá tải), hệ thống tự động catch lỗi và thử gọi lại với model dự phòng (Fallback mechanism).
+5.  **Làm sạch dữ liệu (Sanitize):** Dùng Regex `replace(/```json/g, "")` để gọt bỏ các thẻ Markdown do AI sinh ra, lấy lõi JSON, dùng `JSON.parse` biến thành Object và trả về cho React hiển thị. Cuối cùng, dùng `fs.unlinkSync` để xóa file tạm, giải phóng bộ nhớ.
+
+---
+
+## 3. Thuật Toán Chấm Điểm & Tính Toán (Luồng Nộp Bài)
+Nếu thầy cô hỏi: *"Em chấm điểm bài thi như thế nào? Lỡ sinh viên sửa điểm từ Frontend gửi lên thì sao?"*
+
+**Trả lời:** *"Dạ hệ thống của em thiết kế theo hướng **Bảo mật tuyệt đối (Zero Trust)** đối với Client. Việc chấm điểm diễn ra 100% ở Backend."*
+1.  **Chỉ nhận Đáp án:** Frontend (React) chỉ gửi lên Backend danh sách câu trả lời của user (dạng JSON `user_answers`).
+2.  **Truy xuất Đáp án gốc:** `quizService.processQuizSubmission` sẽ query chọc xuống Database để lấy danh sách đáp án đúng của đề thi đó.
+3.  **Thuật toán So khớp (Normalize & Compare):**
+    *   Câu hỏi nhiều đáp án (Multiple choice): Ví dụ người dùng chọn "C,A", Database lưu "A,C".
+    *   Thuật toán sẽ tự động cắt chuỗi (`split(',')`), sắp xếp theo thứ tự bảng chữ cái (`sort()`) và nối lại (`join(',')`). Nhờ vậy, "C,A" sẽ biến thành "A,C" và so sánh trùng khớp hoàn hảo với Database.
+4.  **Tính điểm:** Lấy `(Số câu đúng / Tổng số câu) * 10` để ra điểm hệ số 10. Ghi kết quả vào bảng `results`.
+
+---
+
+## 4. Thuật Toán Xếp Hạng (Leaderboard & Point Farming)
+Nếu thầy cô hỏi: *"Tiêu chí xếp hạng của em là gì? Có sợ sinh viên dùng tool auto nộp bài 1 đề để cày điểm không?"*
+
+**Trả lời:** *"Dạ hệ thống Leaderboard của em đã được tối ưu bằng SQL để chống cày cuốc (Farming)."*
+*   **Top Điểm Số:** Thay vì tính tổng điểm (`SUM`) của MỌI LẦN làm bài, câu Query SQL sử dụng **Subquery** để gom nhóm theo từng Đề thi (`GROUP BY quiz_id`), dùng hàm `MAX(total_points)` để chỉ lấy số điểm cao nhất cho đề đó. Sau đó mới `SUM` các điểm cao nhất lại. Do đó, làm 1 đề nghìn lần cũng vô dụng.
+*   **Tiêu chí phụ (Tie-breaker):** Nếu 2 bạn bằng điểm nhau, hệ thống ưu tiên người có `MIN(time_spent)` (Tổng thời gian giải quyết các đề thi nhanh hơn).
+*   **Top Chăm Chỉ:** Thay vì đếm tổng số lần nộp bài (`COUNT(r.id)`), SQL dùng `COUNT(DISTINCT r.quiz_id)` – Chỉ đếm số lượng "Đề thi khác nhau" mà User đã làm, kích thích user phải học rộng thay vì cày một chỗ.
+
+---
+
+## 5. Cơ Chế Bảo Mật & An Toàn Dữ Liệu Dưới Database
+*   **Xác thực JWT (JSON Web Token):** Toàn bộ API được bảo vệ bởi `authMiddleware`. Token sinh ra có thời hạn (`expiresIn`), chứa ID người dùng và được mã hóa bằng chữ ký bí mật (`JWT_SECRET`).
+*   **Transaction (Bảo toàn dữ liệu):** Trong hàm tạo/sửa đề thi (`updateFullQuiz`), có nhiều bước thao tác với DB (Sửa bảng Quizzes -> Xóa Questions cũ -> Thêm Questions mới). Hệ thống bọc toàn bộ trong `sql.Transaction`. Nếu bước 3 bị sập mạng, `transaction.rollback()` sẽ chạy, hủy toàn bộ các bước trước đó, đảm bảo CSDL không bao giờ sinh ra dữ liệu rác (Acid properties).
+*   **Chống Mất Dữ Liệu Thi (F5):** Ở Frontend `QuizArena.jsx`, mỗi khi user tích đáp án, hệ thống ngay lập tức lưu vào `localStorage`. Khi user bị rớt mạng hoặc F5, `useState` sẽ ưu tiên "móc" dữ liệu từ `localStorage` ra để phục hồi trạng thái bài thi y nguyên.
+
+---
+
+*(File này là ghi chú riêng của em, cứ đọc đi đọc lại để hiểu cốt lõi. Chúc em bảo vệ đồ án được 10 điểm tuyệt đối!)*

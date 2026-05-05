@@ -14,8 +14,20 @@ const QuizArena = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`quiz_${quizId}_answers`);
+      return saved ? JSON.parse(saved) : {};
+    } catch(e) { return {}; }
+  });
   const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading && !isSubmitted && quiz) {
+      localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(answers));
+      localStorage.setItem(`quiz_${quizId}_time`, timeLeft.toString());
+    }
+  }, [answers, timeLeft, isSubmitted, isLoading, quiz, quizId]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(null);
   const [flagged, setFlagged] = useState({});
@@ -45,7 +57,12 @@ const QuizArena = () => {
         });
         const quizData = response.data.quiz;
         setQuiz(quizData);
-        setTimeLeft(quizData.time_limit * 60);
+        const savedTime = localStorage.getItem(`quiz_${quizId}_time`);
+        if (savedTime && parseInt(savedTime) > 0) {
+          setTimeLeft(parseInt(savedTime));
+        } else {
+          setTimeLeft(quizData.time_limit * 60);
+        }
         setIsLoading(false);
       } catch (err) {
         setError("Không thể tải đề thi. Vui lòng kiểm tra lại ID hoặc đường truyền.");
@@ -141,6 +158,8 @@ const QuizArena = () => {
       });
       
       if(response.data.success) {
+        localStorage.removeItem(`quiz_${quizId}_answers`);
+        localStorage.removeItem(`quiz_${quizId}_time`);
         setScore(response.data.result);
         setIsSubmitted(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -155,7 +174,13 @@ const QuizArena = () => {
     if (!isSubmitted) {
       Swal.fire({
         title: 'Thoát phòng thi?', text: "Hành động này sẽ hủy bỏ bài làm!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Vẫn thoát', cancelButtonText: 'Ở lại'
-      }).then((res) => { if (res.isConfirmed) navigate('/dashboard'); });
+      }).then((res) => { 
+        if (res.isConfirmed) {
+          localStorage.removeItem(`quiz_${quizId}_answers`);
+          localStorage.removeItem(`quiz_${quizId}_time`);
+          navigate('/dashboard'); 
+        }
+      });
     } else navigate('/dashboard');
   };
 

@@ -240,6 +240,11 @@ const LeaderboardPage = () => {
                               {scoreValue}
                             </span>
                             {activeTab === 'points' && <span className="text-slate-400 text-[10px] uppercase font-bold ml-1">pts</span>}
+                            {activeTab === 'points' && user.total_time !== undefined && (
+                              <div className="text-[10px] text-slate-400 font-medium mt-1">
+                                {Math.floor(user.total_time / 60)}p {user.total_time % 60}s
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );

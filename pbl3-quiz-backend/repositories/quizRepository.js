@@ -496,20 +496,28 @@ const getLeaderboard = async (type = 'streak', limit = 10, filters = {}) => {
         }
 
         const query = `
-            SELECT TOP (@lim) u.id, u.username, SUM(r.total_points) as score
+            SELECT TOP (@lim) 
+                u.id, 
+                u.username, 
+                SUM(max_res.max_points) as score, 
+                SUM(max_res.min_time) as total_time
             FROM users u
-            INNER JOIN results r ON r.user_id = u.id
-            INNER JOIN quizzes q ON r.quiz_id = q.id
+            INNER JOIN (
+                SELECT user_id, quiz_id, MAX(total_points) as max_points, MIN(time_spent) as min_time
+                FROM results
+                GROUP BY user_id, quiz_id
+            ) max_res ON max_res.user_id = u.id
+            INNER JOIN quizzes q ON max_res.quiz_id = q.id
             ${baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : ''}
             GROUP BY u.id, u.username
-            ORDER BY score DESC
+            ORDER BY score DESC, total_time ASC
         `;
         return (await request.query(query)).recordset;
     } else if (type === 'active') {
         // Cày cuốc: total number of quiz attempts (results count)
         const whereClause = baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : '';
         const query = `
-            SELECT TOP (@lim) u.id, u.username, COUNT(r.id) as score
+            SELECT TOP (@lim) u.id, u.username, COUNT(DISTINCT r.quiz_id) as score
             FROM users u
             INNER JOIN results r ON r.user_id = u.id
             ${whereClause}

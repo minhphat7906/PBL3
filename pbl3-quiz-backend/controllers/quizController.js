@@ -92,7 +92,13 @@ const getQuizById = async (req, res) => {
 
 const deleteQuiz = async (req, res) => {
     try {
-        await quizService.deleteFullQuiz(req.params.id);
+        const quizId = req.params.id;
+        const quiz = await quizService.getQuizDetail(quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: "Không tìm thấy đề thi" });
+        if (quiz.creator_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Bạn không có quyền xóa đề thi này!" });
+        }
+        await quizService.deleteFullQuiz(quizId);
         res.json({ success: true, message: "Đã xóa sạch đề thi!" });
     } catch (error) { 
         res.status(500).json({ success: false, message: "Lỗi xóa" }); 
@@ -122,6 +128,11 @@ const submitQuiz = async (req, res) => {
 const updateQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
+        const quiz = await quizService.getQuizDetail(quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: "Không tìm thấy đề thi" });
+        if (quiz.creator_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Bạn không có quyền sửa đề thi này!" });
+        }
         await quizService.updateFullQuiz(quizId, req.body);
         res.status(200).json({ success: true, message: 'Cập nhật đề thi thành công!' });
     } catch (error) {
@@ -269,14 +280,24 @@ const getQuizLeaderboard = async (req, res) => {
 };
 
 // ─── MỚI: MẶT TRẬN 1 - TÍCH HỢP GEMINI API + FILE UPLOAD ─────────────
+const fs = require('fs');
+const path = require('path');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
-// Multer: Lưu file vào RAM (buffer), không tốn ổ cứng
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer: Lưu file vào Ổ CỨNG để chống tràn RAM
 const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => cb(null, uploadDir),
+        filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+    }),
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
     fileFilter: (req, file, cb) => {
         const allowed = [
             'application/pdf',
@@ -304,22 +325,30 @@ const generateAIQuizzes = async (req, res) => {
             // ─── Bóc tách văn bản từ file đính kèm ──────────────────
             let documentText = '';
             if (req.file) {
-                const { mimetype, buffer } = req.file;
+                const { mimetype, path: filePath } = req.file;
                 console.log(`[AI] Nhận file: ${req.file.originalname} (${mimetype})`);
 
-                if (mimetype === 'application/pdf') {
-                    const parsed = await pdfParse(buffer);
-                    documentText = parsed.text;
-                } else if (
-                    mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-                    mimetype === 'application/msword'
-                ) {
-                    const result = await mammoth.extractRawText({ buffer });
-                    documentText = result.value;
-                } else if (mimetype === 'text/plain') {
-                    documentText = buffer.toString('utf-8');
+                try {
+                    const fileBuffer = fs.readFileSync(filePath);
+                    if (mimetype === 'application/pdf') {
+                        const parsed = await pdfParse(fileBuffer);
+                        documentText = parsed.text;
+                    } else if (
+                        mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                        mimetype === 'application/msword'
+                    ) {
+                        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+                        documentText = result.value;
+                    } else if (mimetype === 'text/plain') {
+                        documentText = fileBuffer.toString('utf-8');
+                    }
+                } finally {
+                    // Luôn xóa file tạm sau khi đọc xong
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
                 }
-
+                
                 // Giới hạn độ dài để không vượt token limit của Gemini
                 if (documentText.length > 15000) {
                     documentText = documentText.substring(0, 15000) + '\n...(tài liệu đã được cắt ngắn)';
