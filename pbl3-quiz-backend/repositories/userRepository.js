@@ -55,4 +55,14 @@ const createUser = async (username, email, hashedPassword) => {
     `);
 };
 
-module.exports = { findByEmail, createUser, createQuiz, createQuestion };
+const updatePassword = async (email, hashedPassword) => {
+    const request = new sql.Request();
+    request.input('email', sql.VarChar, email);
+    request.input('password_hash', sql.VarChar, hashedPassword);
+    
+    return await request.query(`
+        UPDATE users SET password_hash = @password_hash WHERE email = @email
+    `);
+};
+
+module.exports = { findByEmail, createUser, createQuiz, createQuestion, updatePassword };

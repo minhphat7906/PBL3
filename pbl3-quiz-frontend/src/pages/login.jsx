@@ -90,7 +90,16 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
+                <button 
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-xs font-bold text-[#4f46e5] hover:underline"
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
