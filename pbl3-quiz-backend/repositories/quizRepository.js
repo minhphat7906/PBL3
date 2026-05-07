@@ -404,8 +404,18 @@ const getStreakInfo = async (userId) => {
         const user = result.recordset[0];
         const todayStr = new Date().toISOString().slice(0, 10);
         const lastActiveStr = user?.last_active_date ? new Date(user.last_active_date).toISOString().slice(0, 10) : null;
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+        let effectiveStreak = user?.current_streak || 0;
+        if (lastActiveStr !== todayStr && lastActiveStr !== yesterdayStr) {
+            effectiveStreak = 0;
+        }
+
         return {
-            streak: user?.current_streak || 0,
+            streak: effectiveStreak,
             isActiveToday: lastActiveStr === todayStr
         };
     } catch (err) {
@@ -457,11 +467,14 @@ const getLeaderboard = async (type = 'streak', limit = 10, filters = {}) => {
         const whereClause = baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : '';
         const query = `
             SELECT TOP (@lim) u.id, u.username, 
-                   ISNULL(u.current_streak, 0) as score,
+                   CASE 
+                       WHEN u.last_active_date >= DATEADD(day, -1, CAST(GETDATE() AS DATE)) THEN ISNULL(u.current_streak, 0)
+                       ELSE 0
+                   END as score,
                    u.last_active_date
             FROM users u
             ${whereClause}
-            ORDER BY u.current_streak DESC, u.last_active_date DESC
+            ORDER BY score DESC, u.last_active_date DESC
         `;
         return (await request.query(query)).recordset;
     } else if (type === 'creators') {
