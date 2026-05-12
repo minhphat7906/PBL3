@@ -110,13 +110,13 @@ bash
 npm install
 npm run dev
 ### 🗺️ Lộ Trình Phát Triển (Roadmap)
- Phase 1: Xây dựng Core Flow (Auth, Quiz, History).
- Phase 2: Nâng cấp UI/UX (Tailwind, Recharts, Dark Mode).
- Phase 3: Gamification & Social (Streaks, Leaderboards).
- Phase 4: AI Multi-Provider Generator (PDF/Word Generation).
- Phase 5: AI Tutor Insights & Smart Persistence.
- Phase 6: 🔥 Đấu Trường Real-time (Socket.io Multiplayer).
- Phase 7: 🤖 Smart Retake (Luyện lại câu sai cá nhân hóa).
-🎯 TRẠNG THÁI DỰ ÁN: Hoàn thiện hạ tầng cốt lõi, đạt độ ổn định cao cấp, sẵn sàng cho Demo và vận hành thực tế.
+ * **Phase 1: Xây dựng Core Flow (Auth, Quiz, History).
+ * **Phase 2: Nâng cấp UI/UX (Tailwind, Recharts, Dark Mode).
+ * **Phase 3: Gamification & Social (Streaks, Leaderboards).
+ * **Phase 4: AI Multi-Provider Generator (PDF/Word Generation).
+ * **Phase 5: AI Tutor Insights & Smart Persistence.
+ * **Phase 6: 🔥 Đấu Trường Real-time (Socket.io Multiplayer).
+ * **Phase 7: 🤖 Smart Retake (Luyện lại câu sai cá nhân hóa).
+ * **🎯 TRẠNG THÁI DỰ ÁN: Hoàn thiện hạ tầng cốt lõi, đạt độ ổn định cao cấp, sẵn sàng cho Demo và vận hành thực tế.
 
 Dự án thực hiện bởi: NGUYỄN MINH PHÁT - PBL3 Project.
