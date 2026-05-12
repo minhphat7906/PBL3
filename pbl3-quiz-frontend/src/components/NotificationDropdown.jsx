@@ -51,7 +51,7 @@ const NotificationDropdown = ({ onClose }) => {
     switch (type) {
       case 'success': return <CheckCircle2 size={16} className="text-emerald-500" />;
       case 'warning': return <AlertTriangle size={16} className="text-amber-500" />;
-      default: return <Info size={16} className="text-indigo-500" />;
+      default: return <Info size={16} className="text-[var(--theme-primary)]" />;
     }
   };
 
@@ -73,12 +73,12 @@ const NotificationDropdown = ({ onClose }) => {
     >
       <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
         <h3 className="font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <Bell size={18} className="text-indigo-600" /> Thông báo
+          <Bell size={18} className="text-[var(--theme-primary)]" /> Thông báo
         </h3>
         {notifications.some(n => !n.is_read) && (
           <button 
             onClick={markAllAsRead}
-            className="text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-500 transition-colors"
+            className="text-[10px] font-black uppercase tracking-wider text-[var(--theme-primary)] hover:text-[var(--theme-primary-dark)] transition-colors"
           >
             Đánh dấu đã đọc
           </button>
@@ -102,9 +102,9 @@ const NotificationDropdown = ({ onClose }) => {
             {notifications.map((n) => (
               <div 
                 key={n.id} 
-                className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex gap-3 relative ${!n.is_read ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
+                className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex gap-3 relative ${!n.is_read ? 'bg-[var(--theme-primary-light)]/20 dark:bg-[var(--theme-primary-dark)]/10' : ''}`}
               >
-                {!n.is_read && <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-indigo-600 rounded-full" />}
+                {!n.is_read && <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--theme-primary)] rounded-full" />}
                 <div className="shrink-0 mt-0.5">
                   {getIcon(n.type)}
                 </div>
@@ -123,7 +123,7 @@ const NotificationDropdown = ({ onClose }) => {
       </div>
 
       <div className="p-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-100 dark:border-slate-700 text-center">
-        <button className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-colors">
+        <button className="text-xs font-black text-slate-400 hover:text-[var(--theme-primary)] transition-colors">
           Xem tất cả thông báo
         </button>
       </div>

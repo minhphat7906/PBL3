@@ -376,11 +376,37 @@ const generateAIQuizzes = async (req, res) => {
     });
 };
 
+const explainQuestion = async (req, res) => {
+    try {
+        const { questionId } = req.body;
+        if (!questionId) return res.status(400).json({ success: false, message: "Thiếu ID câu hỏi" });
+
+        // 1. Kiểm tra Cache
+        const question = await quizRepository.getQuestionById(questionId);
+        if (!question) return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi" });
+
+        if (question.ai_explanation) {
+            return res.json({ success: true, explanation: question.ai_explanation, cached: true });
+        }
+
+        // 2. Nếu chưa có, gọi AI
+        const aiResponse = await geminiService.explainQuestion(question);
+        
+        // 3. Lưu vào Cache (Database)
+        await quizRepository.updateQuestionAIExplanation(questionId, aiResponse);
+
+        res.json({ success: true, explanation: aiResponse, cached: false });
+    } catch (error) {
+        console.error("Lỗi AI Explain:", error);
+        res.status(500).json({ success: false, message: error.message || "Lỗi AI" });
+    }
+};
+
 module.exports = { 
     createQuiz, deleteQuiz, getAllQuizzes, getQuizById, getQuizzesByUser, 
     submitQuiz, updateQuiz, getExploreQuizzes, toggleFavorite, getHistory, 
     getDashboardStats, getResultDetail, getExploreStats, getQuizPreview, getCategories,
     // Mới
     getStreakInfo, getWeeklyActivity, getLeaderboard, getQuizLeaderboard,
-    generateAIQuizzes
+    generateAIQuizzes, explainQuestion
 };

@@ -555,8 +555,9 @@ const getQuizLeaderboard = async (quizId, limit = 10, userId = null) => {
         WITH RankedUsers AS (
             SELECT u.id as user_id, u.username, 
                    MAX(r.total_points) as best_score, 
+                   MIN(r.time_spent) as best_time,
                    COUNT(r.id) as attempt_count,
-                   RANK() OVER (ORDER BY MAX(r.total_points) DESC) as [rank]
+                   RANK() OVER (ORDER BY MAX(r.total_points) DESC, MIN(r.time_spent) ASC) as [rank]
             FROM results r
             JOIN users u ON r.user_id = u.id
             WHERE r.quiz_id = @quizId
@@ -610,7 +611,7 @@ const getResultById = async (resultId) => {
         const reqQuestions = new sql.Request();
         reqQuestions.input('quiz_id', sql.Int, resRow.quiz_id);
         const qResult = await reqQuestions.query(`
-            SELECT id, question_text, correct_option as correct_answer
+            SELECT id, question_text, option_a, option_b, option_c, option_d, correct_option as correct_answer, explanation
             FROM questions 
             WHERE quiz_id = @quiz_id
         `);
@@ -666,4 +667,16 @@ module.exports = {
     getWeeklyActivity,
     getLeaderboard,
     getQuizLeaderboard,
+    getQuestionById: async (id) => {
+        const request = new sql.Request();
+        request.input('id', sql.Int, id);
+        const result = await request.query('SELECT * FROM questions WHERE id = @id');
+        return result.recordset[0];
+    },
+    updateQuestionAIExplanation: async (id, explanation) => {
+        const request = new sql.Request();
+        request.input('id', sql.Int, id);
+        request.input('ai_explanation', sql.NVarChar, explanation);
+        await request.query('UPDATE questions SET ai_explanation = @ai_explanation WHERE id = @id');
+    }
 };

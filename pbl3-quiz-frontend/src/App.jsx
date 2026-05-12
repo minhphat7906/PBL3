@@ -17,6 +17,7 @@ import HelpPage from "./pages/HelpPage";
 import AdminPage from "./pages/AdminPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import ForgotPassword from "./pages/ForgotPassword";
+import ThemeSwitcher from "./components/ThemeSwitcher";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {

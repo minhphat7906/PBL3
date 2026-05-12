@@ -109,7 +109,7 @@ const LightQuizCard = ({ quiz, onClick, onPlayClick, onPreviewClick, showActions
         </span>
 
         {/* Title */}
-        <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm leading-snug line-clamp-2 min-h-[36px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-auto">
+        <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm leading-snug line-clamp-2 min-h-[36px] group-hover:text-[var(--theme-primary)] dark:group-hover:text-[var(--theme-primary-light)] transition-colors mb-auto">
           {quiz.title}
         </h3>
 
@@ -148,7 +148,7 @@ const LightQuizCard = ({ quiz, onClick, onPlayClick, onPreviewClick, showActions
                     className="w-4 h-4 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700" 
                   />
                 ) : (
-                  <div className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[8px] font-black">
+                  <div className="w-4 h-4 rounded-full bg-[var(--theme-primary-light)] dark:bg-[var(--theme-primary-dark)]/50 text-[var(--theme-primary)] dark:text-[var(--theme-primary-light)] flex items-center justify-center text-[8px] font-black">
                     {quiz.author_name.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -162,7 +162,7 @@ const LightQuizCard = ({ quiz, onClick, onPlayClick, onPreviewClick, showActions
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); onPlayClick(quiz); }}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-colors duration-200 shadow-sm shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-dark)] text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-colors duration-200 shadow-sm shadow-[var(--theme-glow)] flex items-center justify-center gap-2"
             >
               <Play size={13} fill="currentColor" /> Làm bài ngay
             </button>

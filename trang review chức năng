@@ -88,16 +88,48 @@ Dưới đây là các ý tưởng "hạng nặng" để biến dự án của b
     *   [ ] 🔥 **Chế độ "Đấu Trường" (Real-time Multiplayer):** Sử dụng Socket.io để thi đấu trực tiếp 2-3 người cùng lúc, thấy điểm và tiến trình của đối thủ nhảy thời gian thực (như Kahoot).
     - [ ] 🤖 **Trợ giảng AI (AI Tutor Chat):** Nút "Hỏi AI tại sao sai?" ở màn hình Review. Cho phép chat trực tiếp với Gemini để giải đáp sâu hơn về kiến thức của câu hỏi đó.
     - [ ] 🗂️ **Flashcards (Thẻ ghi nhớ):** Chế độ học tập lật thẻ ghi nhớ giúp người dùng thuộc lòng kiến thức trước khi bước vào bài thi trắc nghiệm.
-    - [ ] 📄 **Xuất PDF chuyên nghiệp:** Cho phép người dùng tải bộ đề về máy dưới dạng PDF có định dạng đẹp.
+    - [x] 📄 **Xuất PDF chuyên nghiệp:** Cho phép người dùng tải bộ đề về máy dưới dạng PDF có định dạng đẹp (Đã tích hợp trong Card đề thi).
 
 *   **Nâng cấp kỹ thuật:**
     *   [ ] 🛡️ **Zod Validation:** Chuẩn hóa dữ liệu đầu vào ở Backend, ngăn chặn mọi hành vi gửi dữ liệu rác gây sập Server.
     *   [ ] ⚡ **Nodemon Development:** Cấu hình để Server tự động khởi động lại khi lưu code, tiết kiệm thời gian phát triển.
-    *   [ ] 🎬 **Framer Motion:** Thêm các hiệu ứng chuyển động (Animation) mượt mà khi chuyển câu hỏi, làm giao diện đẳng cấp hơn.
+    *   [x] 🎬 **Framer Motion:** Thêm các hiệu ứng chuyển động (Animation) mượt màng khi chuyển câu hỏi và hiển thị kết quả, làm giao diện đẳng cấp hơn.
 
 *   **Ghi chú cá nhân của bạn:**
     *   - ____________________________________________________
     *   - ____________________________________________________
+
+---
+
+## IV. TẦM NHÌN NÂNG CẤP UX/UI & GAMIFICATION (GIAI ĐOẠN TIẾP THEO)
+
+Đây là các ý tưởng để "lột xác" dự án, tạo ấn tượng cực mạnh về mặt thị giác và trải nghiệm người dùng:
+
+### 1. Nâng tầm Landing Page & Dashboard
+*   [x] **Mesh Gradient Background:** Sử dụng nền lưới màu ảo diệu (Tím/Xanh/Đen) thay cho nền trắng đơn điệu.
+*   [x] **Glassmorphism Card:** Thiết kế các khối chức năng theo phong cách "kính mờ" (Backdrop blur) tạo chiều sâu.
+*   [x] **Glow hover effect:** Hiệu ứng phát sáng neon khi di chuyển chuột qua các bộ đề.
+
+### 2. Trải nghiệm Kết quả "Epic" (Epic Result Screen)
+*   [x] **Số liệu nhảy (Count-up):** Điểm số và thông số chạy vù vù từ 0 lên con số thực tế khi vừa mở trang.
+*   [x] **Biểu đồ Radar (Recharts):** Phân tích kỹ năng người dùng (Tốc độ, Ghi nhớ, Suy luận) qua biểu đồ mạng nhện.
+*   [x] **Hệ thống Danh hiệu (Insights):** Tự động vinh danh user (VD: "Thánh tốc độ", "Chuỗi bùng nổ 5 câu đúng").
+*   [x] **Pháo hoa chúc mừng (Canvas Confetti):** Bắn pháo hoa giấy khi đạt điểm cao (trên 80%).
+
+### 3. Tích hợp Bảng xếp hạng trực tiếp (Smart Leaderboard)
+*   [x] **Tiêu chí xếp hạng:** Ưu tiên Điểm số cao nhất ➡️ Tốc độ hoàn thành nhanh nhất.
+*   [x] **Hiển thị thông minh:** Hiển thị Top 10, Highlight chính mình, và hiển thị thứ hạng cá nhân nếu ở ngoài Top.
+
+### 4. Hệ thống Cá nhân hóa (Theming)
+*   [x] **Accent Color Picker:** Cho phép người dùng đổi màu chủ đạo (Indigo, Emerald, Rose, Orange...) và chế độ Dark/Light trực tiếp trên Header.
+
+---
+## V. NHẬT KÝ CẬP NHẬT (PHIÊN BẢN MỚI NHẤT)
+
+- **Fix White Screen**: Khắc phục triệt để lỗi trắng trang do xung đột React 19 với Recharts và CountUp.
+- **Smart Theme Engine**: Tích hợp bộ chuyển đổi màu sắc thông minh trên toàn hệ thống.
+- **Epic UI Update**: Nâng cấp toàn bộ giao diện theo phong cách Modern Glassmorphism.
+- **PDF Export**: Bổ sung tính năng tải đề thi về máy dưới dạng PDF.
 
 ---
 *Người soạn: Antigravity AI Assistant*
