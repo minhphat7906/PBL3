@@ -72,7 +72,11 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
                 ]
                 `;
 
-                const result = await model.generateContent(prompt);
+                // Bổ sung timeout 15s cho mỗi request AI
+                const result = await Promise.race([
+                    model.generateContent(prompt),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('AI Request Timeout')), 15000))
+                ]);
                 const response = await result.response;
                 let text = response.text();
 

@@ -404,8 +404,18 @@ const getStreakInfo = async (userId) => {
         const user = result.recordset[0];
         const todayStr = new Date().toISOString().slice(0, 10);
         const lastActiveStr = user?.last_active_date ? new Date(user.last_active_date).toISOString().slice(0, 10) : null;
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+        let effectiveStreak = user?.current_streak || 0;
+        if (lastActiveStr !== todayStr && lastActiveStr !== yesterdayStr) {
+            effectiveStreak = 0;
+        }
+
         return {
-            streak: user?.current_streak || 0,
+            streak: effectiveStreak,
             isActiveToday: lastActiveStr === todayStr
         };
     } catch (err) {
@@ -457,11 +467,14 @@ const getLeaderboard = async (type = 'streak', limit = 10, filters = {}) => {
         const whereClause = baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : '';
         const query = `
             SELECT TOP (@lim) u.id, u.username, 
-                   ISNULL(u.current_streak, 0) as score,
+                   CASE 
+                       WHEN u.last_active_date >= DATEADD(day, -1, CAST(GETDATE() AS DATE)) THEN ISNULL(u.current_streak, 0)
+                       ELSE 0
+                   END as score,
                    u.last_active_date
             FROM users u
             ${whereClause}
-            ORDER BY u.current_streak DESC, u.last_active_date DESC
+            ORDER BY score DESC, u.last_active_date DESC
         `;
         return (await request.query(query)).recordset;
     } else if (type === 'creators') {
@@ -496,20 +509,28 @@ const getLeaderboard = async (type = 'streak', limit = 10, filters = {}) => {
         }
 
         const query = `
-            SELECT TOP (@lim) u.id, u.username, SUM(r.total_points) as score
+            SELECT TOP (@lim) 
+                u.id, 
+                u.username, 
+                SUM(max_res.max_points) as score, 
+                SUM(max_res.min_time) as total_time
             FROM users u
-            INNER JOIN results r ON r.user_id = u.id
-            INNER JOIN quizzes q ON r.quiz_id = q.id
+            INNER JOIN (
+                SELECT user_id, quiz_id, MAX(total_points) as max_points, MIN(time_spent) as min_time
+                FROM results
+                GROUP BY user_id, quiz_id
+            ) max_res ON max_res.user_id = u.id
+            INNER JOIN quizzes q ON max_res.quiz_id = q.id
             ${baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : ''}
             GROUP BY u.id, u.username
-            ORDER BY score DESC
+            ORDER BY score DESC, total_time ASC
         `;
         return (await request.query(query)).recordset;
     } else if (type === 'active') {
         // Cày cuốc: total number of quiz attempts (results count)
         const whereClause = baseWhere.length > 0 ? `WHERE ${baseWhere.join(' AND ')}` : '';
         const query = `
-            SELECT TOP (@lim) u.id, u.username, COUNT(r.id) as score
+            SELECT TOP (@lim) u.id, u.username, COUNT(DISTINCT r.quiz_id) as score
             FROM users u
             INNER JOIN results r ON r.user_id = u.id
             ${whereClause}

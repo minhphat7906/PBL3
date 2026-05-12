@@ -1,0 +1,108 @@
+# TÀI LIỆU PHÂN TÍCH THUẬT TOÁN VÀ LUỒNG HOẠT ĐỘNG HỆ THỐNG (FULL)
+
+Tài liệu này tập trung giải phẫu chi tiết các thuật toán, cách dữ liệu được biến đổi và luồng xử lý (workflow) dưới nền tảng của hệ thống.
+
+---
+
+## 1. THUẬT TOÁN CHẤM ĐIỂM VÀ SO KHỚP ĐÁP ÁN (GRADING ALGORITHM)
+
+**Vị trí:** `services/quizService.js` (Hàm `processQuizSubmission`)
+**Mục đích:** Đảm bảo việc chấm điểm diễn ra 100% tại Server (Zero Trust), hỗ trợ chấm đúng cả các câu hỏi có "nhiều đáp án đúng" mà không bị ảnh hưởng bởi thứ tự chọn.
+
+**Quy trình và Thuật toán:**
+1. **Fetch dữ liệu chuẩn:** Khi Client gửi gói `user_answers`, Server dùng `quiz_id` để kéo toàn bộ câu hỏi gốc từ Database lên.
+2. **Chuẩn hóa chuỗi (Normalization):** Để so sánh đáp án nhiều lựa chọn (Multiple Choice), thuật toán sử dụng kỹ thuật cắt - sắp xếp - nối chuỗi.
+   *   *Đáp án DB:* `(q.correct_option || "").split(',').sort().join(',')` (Ví dụ: DB lưu "C,A" -> Biến đổi thành `"A,C"`).
+   *   *Đáp án User:* Nếu gửi lên "A, C" -> Xóa khoảng trắng, biến đổi thành mảng `['A', 'C']` -> `sort()` -> `join(',')` -> Thành `"A,C"`.
+3. **So khớp (Matching):** Nếu `userAnswer === dbAnswer`, tăng biến đếm `correctCount`.
+4. **Tính toán hệ số:** Điểm 100 lưu DB và Điểm 10 hiển thị UI.
+
+---
+
+## 2. LUỒNG XỬ LÝ SINH ĐỀ THI TỰ ĐỘNG BẰNG AI (AI PIPELINE)
+
+**Vị trí:** `controllers/quizController.js` và `services/geminiService.js`
+**Cơ chế hoạt động:** Trích xuất văn bản từ tệp đính kèm và tiêm (inject) vào LLM Prompt.
+
+**Các bước xử lý Pipeline:**
+1. **Bộ đệm I/O (Disk Storage):** Thư viện `multer` đón File từ Client, ghi tạm dưới dạng nhị phân vào ổ cứng (`/uploads`) để chống tràn RAM.
+2. **Text Extraction:** Dùng `pdf-parse` (cho PDF) hoặc `mammoth` (cho DOCX) để hút văn bản (plain text).
+3. **LLM Prompting & Validation:** 
+   *   Cơ chế **Promise.race**: Chạy đua giữa API Gemini và `setTimeout` 15 giây. Quá 15 giây tự động hủy để chống treo hệ thống.
+   *   Cơ chế **Fallback Model**: Nếu `gemini-1.5-flash` ném lỗi 503/429 (quá tải), vòng lặp tự động retry với model dự phòng.
+4. **Data Sanitization & Dọn dẹp:** Dùng Regex `replace(/```json/g, "")` cắt bỏ rác Markdown, lấy lõi JSON chuẩn. Dùng `fs.unlinkSync` xóa file gốc khỏi ổ cứng.
+
+---
+
+## 3. THUẬT TOÁN CHỐNG GIAN LẬN XẾP HẠNG (ANTI-FARMING LEADERBOARD)
+
+**Chiến lược truy vấn (SQL Logic):**
+*   **Top Score (Điểm cao nhất):** Không tính tổng điểm mọi lần thi. Dùng **Subquery (Truy vấn con)**: `SELECT MAX(total_points) ... GROUP BY user_id, quiz_id` để lấy mốc điểm cao nhất cho từng đề. Sau đó truy vấn ngoài mới `SUM` các điểm MAX này lại.
+*   **Tie-breaker (Tiêu chí phụ):** Dùng `MIN(time_spent)` để lấy thời gian ngắn nhất nếu trùng điểm.
+*   **Top Active (Năng nổ):** Dùng `COUNT(DISTINCT r.quiz_id)` thay vì `COUNT(r.id)` để buộc User phải cày các đề **khác nhau** thay vì làm 1 đề nghìn lần.
+
+---
+
+## 4. THUẬT TOÁN TÍNH CHUỖI NGÀY HỌC LIÊN TIẾP (STREAK SYSTEM)
+
+**Vị trí:** `repositories/quizRepository.js` (Hàm `saveResult` -> update current_streak)
+**Logic xử lý DateTime:**
+1. Lấy ngày hệ thống hiện tại (`todayDate`). So sánh với `last_active_date` của User.
+2. Cây quyết định (Decision Tree):
+   *   Nếu `last_active === today`: Đã học rồi -> Bỏ qua.
+   *   Nếu `last_active === yesterday (today - 1)`: Học liên tục -> Cộng chuỗi `streak = streak + 1`.
+   *   Khác (Nghỉ trên 1 ngày hoặc mới tạo): Đứt chuỗi -> Reset `streak = 1`.
+
+---
+
+## 5. LUỒNG XÁC THỰC VÀ BẢO MẬT (AUTHENTICATION & OTP FLOW)
+
+**Vị trí:** `services/authService.js`
+**Mục đích:** Xác minh danh tính người dùng và bảo vệ dữ liệu mật khẩu.
+
+**Quy trình Hoạt động:**
+1. **Mã hóa (Hashing):** Mật khẩu người dùng không bao giờ lưu dưới dạng Text thường (Plaintext). Thuật toán `bcrypt` tự sinh ra một muối (`salt`) và băm (`hash`) mật khẩu nhiều vòng, tạo ra chuỗi không thể dịch ngược.
+2. **Luồng Đăng ký (Khu vực chờ - Pending Zone):**
+   *   Khi User nhấn đăng ký, thông tin chưa vào thẳng DB chính thức.
+   *   Hệ thống sinh chuỗi ngẫu nhiên 6 số (`Math.random`) làm OTP. Hạn sử dụng (`expires_at`) được set là `Hiện tại + 5 phút`.
+   *   Dữ liệu được tống vào bảng phụ `pending_users` và bắn mail qua NodeMailer/Mailgun.
+3. **Verify OTP:** Khi nhập mã, check `email + OTP` trong `pending_users` kèm điều kiện `expires_at > GETUTCDATE()`. Khớp thì bốc từ bảng phụ đẩy sang bảng `users` chính thức, sau đó **xóa rác** ở bảng phụ.
+4. **Cơ chế Phiên làm việc (JWT):** Đăng nhập thành công -> Ký một Token chứa `userId` và `role` bằng một chuỗi Khóa bí mật (`JWT_SECRET`). Token này có hạn 1 ngày. Mỗi lần Client gọi API, `authMiddleware` sẽ lấy Token ra xác thực ngược chữ ký xem có bị giả mạo không.
+
+---
+
+## 6. THUẬT TOÁN PHÂN TRANG VÀ TÌM KIẾM TỐI ƯU (PAGINATION & SEARCH OPTIMIZATION)
+
+**Vị trí:** API Khám phá (`getExploreQuizzes`)
+**Mục đích:** Tải hàng ngàn đề thi mà không làm sập Database.
+
+**Kỹ thuật SQL áp dụng:**
+1. **Window Function đếm tổng số:** Thông thường, để làm tính năng phân trang, hệ thống phải chạy 2 câu SQL: một câu đếm tổng số dòng (để tính ra số trang), một câu lấy dữ liệu thật. 
+   *   Hệ thống này dùng kỹ thuật: `COUNT(*) OVER() as total_count` lồng trực tiếp vào câu `SELECT`. Nó giúp đếm tổng số mẩu tin thỏa mãn điều kiện chỉ trong **1 LẦN quét DB duy nhất**, tiết kiệm 50% thời gian xử lý.
+2. **Phân trang (Offset Pagination):** Sử dụng mệnh đề `OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY` để cắt đúng phần bánh (ví dụ lấy từ dòng 20 đến 40) ném về cho Frontend.
+3. **Dynamic Filtering (Lọc động):** Mảng `baseWhere` nối chuỗi logic linh hoạt. Nếu có `search`, nhồi thêm cụm `(title LIKE %search%)`, nếu có `category`, nhồi thêm `category_id = @id`. Lưới rà soát linh hoạt không chết cứng.
+
+---
+
+## 7. CƠ CHẾ TOGGLE (CÔNG TẮC BẬT TẮT) & TƯƠNG TÁC NGƯỜI DÙNG
+
+**Vị trí:** Yêu thích (Favorites) & Đánh giá (Reviews) & Admin Toggle.
+**Hoạt động theo nguyên lý "Công tắc" (Toggle Logic):**
+1. **Yêu thích (Like/Heart):** Client bấm 1 nút duy nhất. 
+   *   Backend check trong DB: Nếu `EXISTS (user_id + quiz_id)` -> Chạy lệnh `DELETE` (Bỏ tim).
+   *   Nếu `NOT EXISTS` -> Chạy lệnh `INSERT` (Thả tim).
+2. **Tính toán Sao Rating:**
+   *   Backend không lưu cứng trường "điểm trung bình" vào bảng `quizzes` để tránh dữ liệu bị lệch (Data Anomaly) khi xóa/sửa Review.
+   *   Sử dụng câu truy vấn Aggregation: `AVG(rating) FROM reviews WHERE quiz_id = @id`. Database sẽ tự động cộng tổng tất cả các sao và chia trung bình ngay lúc User gọi API.
+3. **Phân quyền Admin (Authorization):**
+   *   Sau khi Middleware 1 (`authMiddleware`) check Token, Middleware 2 (`adminMiddleware`) bóc Token ra soi tiếp `req.user.role === 'admin'`. Khớp mới cho chạy tiếp xuống Controller Xóa/Sửa đề của người khác.
+
+---
+
+## 8. BẢO TOÀN DỮ LIỆU ĐỒNG BỘ (DATABASE TRANSACTIONS)
+
+**Vị trí:** `services/quizService.js` (Hàm sửa/tạo đề thi)
+**Hoạt động:** Quản lý tính toàn vẹn (ACID Properties). Khi lưu 1 đề có 10 câu hỏi, hệ thống phải Insert bảng Quizzes và Insert 10 lần vào bảng Questions. 
+*   Bọc toàn bộ trong `sql.Transaction()`.
+*   Nếu câu số 1 đến 9 chèn thành công, nhưng câu 10 bị rớt mạng -> `transaction.rollback()` hủy bỏ toàn bộ 9 câu kia lẫn đề thi, đảm bảo DB không bao giờ xuất hiện "Đề thi rác bị cụt câu hỏi".
+*   Thành công hết 100% -> `transaction.commit()` chốt ghi dữ liệu vào đĩa cứng.

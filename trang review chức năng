@@ -1,0 +1,103 @@
+# TỔNG HỢP REVIEW DỰ ÁN PBL3 - HỆ THỐNG ÔN TẬP TRẮC NGHIỆM THÔNG MINH (QUIZSMART)
+
+Chào bạn, đây là bản review chi tiết toàn bộ hệ thống dự án PBL3 của bạn. Bản review này được cập nhật đầy đủ các tính năng hiện tại (bao gồm cả AI, Gamification và Quản trị) để bạn có thể tự tin thuyết trình hoặc giới thiệu cho bạn bè.
+
+---
+
+## I. CÁC PHẦN HỆ THỐNG (TỪ NHỎ ĐẾN LỚN)
+
+### 1. Hệ thống Xác thực & Bảo mật (Authentication)
+*   **Đăng ký tài khoản:** Cho phép người dùng mới tạo tài khoản qua Email.
+*   **Đăng nhập:** Xác thực danh tính, phân quyền rõ ràng giữa User và Admin.
+*   **Quên mật khẩu:** Sử dụng mã OTP gửi qua Email để thiết lập lại mật khẩu an toàn.
+*   **Bảo mật:** Tích hợp Rate Limiting (chống brute-force) và Security Headers (bảo vệ API).
+
+### 2. Quản lý Cá nhân & Dashboard (Personal Management)
+*   **Hồ sơ cá nhân:** Xem và cập nhật thông tin, thay đổi ảnh đại diện, đổi mật khẩu.
+*   **Dashboard thông minh:** 
+    *   Theo dõi tiến độ qua biểu đồ **Hoạt động tuần** (Real-time charts).
+    *   Hệ thống **Streak (Chuỗi ngày học tập)** để tạo động lực.
+    *   Thống kê nhanh: Đề đã tạo, Tổng lượt thi, Điểm trung bình, Lượt yêu thích.
+*   **Thông báo:** Hệ thống thông báo thời gian thực về hoạt động mới.
+
+### 3. Trung tâm Đề thi (Quiz Hub)
+*   **Tạo Quiz (2 phương thức):**
+    *   **Thủ công:** Tự soạn từng câu hỏi, đáp án, giải thích.
+    *   **Trí tuệ nhân tạo (AI):** Tải lên tệp (PDF, Word) hoặc nhập văn bản. AI tự động bóc tách nội dung và sinh câu hỏi trong vài giây.
+*   **Khám phá (Explore):** Tìm kiếm bộ đề công khai theo từ khóa, lọc theo Chủ đề (Toán, Lý, Anh...) và Mức độ (Dễ, Trung bình, Khó).
+*   **Yêu thích (Bookmark):** Lưu lại các bộ đề hay để ôn tập sau.
+
+### 4. Trải nghiệm Thi & Luyện tập (Quiz Arena)
+*   **Chế độ thi:** Giao diện chuyên nghiệp với đồng hồ đếm ngược, lưới điều hướng câu hỏi nhanh.
+*   **Chống gian lận:** Tự động nộp bài khi hết giờ, ghi nhận thời gian làm bài chính xác.
+*   **Kết quả chi tiết:** Ngay sau khi nộp, hệ thống hiển thị điểm số, số câu đúng/sai, thời gian hoàn thành và **Giải thích chi tiết** từng câu.
+
+### 5. Tính năng Cộng đồng & Cạnh tranh (Social & Gamification)
+*   **Bảng xếp hạng (Leaderboard):** 
+    *   Xếp hạng toàn cầu (Top Streak, Top Sáng tác, Top Cày cuốc).
+    *   Bảng xếp hạng riêng cho từng bộ đề thi.
+*   **Đánh giá & Phản hồi:** Người dùng có thể đánh giá (Rating sao) và nhận xét về chất lượng bộ đề.
+*   **Báo cáo (Report):** Gửi báo cáo lỗi nội dung cho Admin.
+
+### 6. Quản trị Hệ thống (Admin Panel)
+*   **Quản lý người dùng:** Xem danh sách, cập nhật vai trò, khóa/xóa tài khoản vi phạm.
+*   **Kiểm duyệt Quiz:** Kiểm soát các bộ đề công khai, ẩn các nội dung không phù hợp.
+*   **Hỗ trợ khách hàng:** Tiếp nhận và xử lý các yêu cầu trợ giúp (Support Tickets).
+
+---
+
+## II. REVIEW CHI TIẾT CÁC NÚT (BUTTON) & CHỨC NĂNG
+
+| Trang | Nút / Thao tác | Chức năng chi tiết |
+| :--- | :--- | :--- |
+| **Trang chủ / Dash** | `Tạo bằng AI` | Mở trình soạn thảo AI, cho phép upload tài liệu để sinh đề tự động. |
+| | `Làm bài` | Bắt đầu tham gia giải bộ đề trắc nghiệm. |
+| | `❤️ (Yêu thích)` | Lưu bộ đề vào danh sách cá nhân. |
+| | `Chế độ Tối/Sáng` | Thay đổi giao diện Dark Mode / Light Mode cho toàn hệ thống. |
+| | `Thông báo` | Xem danh sách các thông báo mới nhất. |
+| **Soạn thảo Quiz** | `Thêm câu hỏi` | Tạo thêm một ô nhập liệu câu hỏi mới. |
+| | `Sinh đề AI` | Gửi nội dung/tệp lên Server để AI xử lý và trả về câu hỏi. |
+| | `Lưu bộ đề` | Kiểm tra tính hợp lệ và lưu vào Cơ sở dữ liệu. |
+| | `Công khai/Riêng tư` | Nút gạt quyết định bộ đề có xuất hiện trong kho cộng đồng không. |
+| **Phòng thi (Arena)** | `Lưới câu hỏi` | Nhảy nhanh đến câu hỏi bất kỳ (Câu chưa làm màu xám, đã làm màu xanh). |
+| | `Nộp bài` | Kết thúc bài thi và tính điểm ngay lập tức. |
+| | `Thoát` | Dừng làm bài và quay lại trang chủ (Có cảnh báo). |
+| **Kết quả** | `Xem giải thích` | Hiển thị lời giải chi tiết cho từng câu hỏi đã làm. |
+| | `Làm lại` | Chơi lại bộ đề đó một lần nữa để cải thiện điểm. |
+| **Hồ sơ** | `Cập nhật` | Lưu các thay đổi về thông tin cá nhân. |
+| | `Đổi Avatar` | Tải ảnh mới lên để thay đổi nhận diện cá nhân. |
+| **Admin** | `Cấp quyền` | Thay đổi vai trò người dùng từ User lên Admin hoặc ngược lại. |
+| | `Duyệt/Ẩn` | Quản lý hiển thị của các bộ đề trong kho cộng đồng. |
+| | `Phản hồi` | Đánh dấu các yêu cầu hỗ trợ đã được xử lý xong. |
+
+---
+
+## III. PHẦN PHÁT TRIỂN, SỬA ĐỔI & CHECKLIST (DÀNH CHO BẠN)
+
+Dưới đây là các ý tưởng "hạng nặng" để biến dự án của bạn thành một sản phẩm chuyên nghiệp, gây ấn tượng mạnh với nhà tuyển dụng:
+
+*   **Checklist tính năng hiện có:**
+    *   [x] Đăng ký/Đăng nhập/OTP
+    *   [x] Tạo Quiz AI (PDF/Word)
+    *   [x] Dashboard & Chart (Thống kê & Biểu đồ)
+    *   [x] Leaderboard toàn cầu (Bảng xếp hạng)
+    *   [x] Hệ thống thông báo (Notifications)
+    *   [x] Dark Mode (Giao diện tối)
+
+*   **Ý tưởng phát triển mới (Tính năng "WOW"):**
+    *   [ ] 🔥 **Chế độ "Đấu Trường" (Real-time Multiplayer):** Sử dụng Socket.io để thi đấu trực tiếp 2-3 người cùng lúc, thấy điểm và tiến trình của đối thủ nhảy thời gian thực (như Kahoot).
+    - [ ] 🤖 **Trợ giảng AI (AI Tutor Chat):** Nút "Hỏi AI tại sao sai?" ở màn hình Review. Cho phép chat trực tiếp với Gemini để giải đáp sâu hơn về kiến thức của câu hỏi đó.
+    - [ ] 🗂️ **Flashcards (Thẻ ghi nhớ):** Chế độ học tập lật thẻ ghi nhớ giúp người dùng thuộc lòng kiến thức trước khi bước vào bài thi trắc nghiệm.
+    - [ ] 📄 **Xuất PDF chuyên nghiệp:** Cho phép người dùng tải bộ đề về máy dưới dạng PDF có định dạng đẹp.
+
+*   **Nâng cấp kỹ thuật:**
+    *   [ ] 🛡️ **Zod Validation:** Chuẩn hóa dữ liệu đầu vào ở Backend, ngăn chặn mọi hành vi gửi dữ liệu rác gây sập Server.
+    *   [ ] ⚡ **Nodemon Development:** Cấu hình để Server tự động khởi động lại khi lưu code, tiết kiệm thời gian phát triển.
+    *   [ ] 🎬 **Framer Motion:** Thêm các hiệu ứng chuyển động (Animation) mượt mà khi chuyển câu hỏi, làm giao diện đẳng cấp hơn.
+
+*   **Ghi chú cá nhân của bạn:**
+    *   - ____________________________________________________
+    *   - ____________________________________________________
+
+---
+*Người soạn: Antigravity AI Assistant*

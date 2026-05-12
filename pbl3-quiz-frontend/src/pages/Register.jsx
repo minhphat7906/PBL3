@@ -209,14 +209,20 @@ const Register = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      minLength={6}
                     />
                   </div>
+                  {password.length > 0 && password.length < 6 && (
+                    <p className="text-xs text-rose-500 font-bold mt-1 ml-1 animate-pulse">
+                      Mật khẩu phải có ít nhất 6 ký tự
+                    </p>
+                  )}
                 </div>
               </div>
 
               <button 
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || (password.length > 0 && password.length < 6)}
                 className="w-full h-[54px] bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 text-white font-black rounded-2xl shadow-xl shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
               >
                 {isLoading ? (

@@ -14,10 +14,23 @@ const QuizArena = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`quiz_${quizId}_answers`);
+      return saved ? JSON.parse(saved) : {};
+    } catch(e) { return {}; }
+  });
   const [timeLeft, setTimeLeft] = useState(0);
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(null);
+
+  useEffect(() => {
+    if (!isLoading && !isSubmitted && quiz) {
+      localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(answers));
+      localStorage.setItem(`quiz_${quizId}_time`, timeLeft.toString());
+    }
+  }, [answers, timeLeft, isSubmitted, isLoading, quiz, quizId]);
   const [flagged, setFlagged] = useState({});
   const [showRatingModal, setShowRatingModal] = useState(false);
 
@@ -45,7 +58,12 @@ const QuizArena = () => {
         });
         const quizData = response.data.quiz;
         setQuiz(quizData);
-        setTimeLeft(quizData.time_limit * 60);
+        const savedTime = localStorage.getItem(`quiz_${quizId}_time`);
+        if (savedTime && parseInt(savedTime) > 0) {
+          setTimeLeft(parseInt(savedTime));
+        } else {
+          setTimeLeft(quizData.time_limit * 60);
+        }
         setIsLoading(false);
       } catch (err) {
         setError("Không thể tải đề thi. Vui lòng kiểm tra lại ID hoặc đường truyền.");
@@ -81,7 +99,7 @@ const QuizArena = () => {
 
     if (type === 'multiple') {
       // Logic cho phép tick nhiều ô (Checkboxes)
-      const currentAns = answers[questionId] || [];
+      const currentAns = Array.isArray(answers[questionId]) ? answers[questionId] : (answers[questionId] ? [answers[questionId]] : []);
       let newAns;
       if (currentAns.includes(opt)) {
         newAns = currentAns.filter(item => item !== opt); // Hủy tick
@@ -141,6 +159,8 @@ const QuizArena = () => {
       });
       
       if(response.data.success) {
+        localStorage.removeItem(`quiz_${quizId}_answers`);
+        localStorage.removeItem(`quiz_${quizId}_time`);
         setScore(response.data.result);
         setIsSubmitted(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -155,13 +175,31 @@ const QuizArena = () => {
     if (!isSubmitted) {
       Swal.fire({
         title: 'Thoát phòng thi?', text: "Hành động này sẽ hủy bỏ bài làm!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Vẫn thoát', cancelButtonText: 'Ở lại'
-      }).then((res) => { if (res.isConfirmed) navigate('/dashboard'); });
+      }).then((res) => { 
+        if (res.isConfirmed) {
+          localStorage.removeItem(`quiz_${quizId}_answers`);
+          localStorage.removeItem(`quiz_${quizId}_time`);
+          navigate('/dashboard'); 
+        }
+      });
     } else navigate('/dashboard');
   };
 
   if (isLoading) return <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 flex flex-col items-center justify-center text-[#4f46e5] dark:text-indigo-400"><Loader2 className="animate-spin mb-4" size={48} /><h2 className="text-xl font-bold italic dark:text-slate-300">Đang chuẩn bị đề thi...</h2></div>;
   if (error) return <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 flex items-center justify-center p-6 text-center"><div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-8 rounded-3xl max-w-md border border-red-100 dark:border-red-900/50"><h2 className="text-2xl font-black mb-2">Oops!</h2><p>{error}</p><button onClick={() => navigate('/dashboard')} className="mt-6 px-6 py-2 bg-red-600 text-white font-bold rounded-full">Về Dashboard</button></div></div>;
-  const currentQ = quiz.questions[currentIndex];
+  
+  const currentQ = quiz.questions && quiz.questions[currentIndex];
+
+  if (!currentQ) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-800 dark:text-slate-200">
+        <h2 className="text-2xl font-black mb-4">Đề thi này chưa có câu hỏi nào!</h2>
+        <button onClick={() => navigate('/dashboard')} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-500">
+          Về Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
