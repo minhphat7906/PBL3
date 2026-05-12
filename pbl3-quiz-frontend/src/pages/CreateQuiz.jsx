@@ -62,6 +62,8 @@ const CreateQuiz = () => {
   const [loadingStatus, setLoadingStatus] = useState('');
 
   const handleGenerateAI = async () => {
+    if (isGenerating) return; // [CHẶN CLICK ĐÔI] - Bảo vệ API Quota
+
     if (!aiPrompt.trim() && !aiFile) {
       Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập chủ đề hoặc đính kèm tài liệu!' });
       return;

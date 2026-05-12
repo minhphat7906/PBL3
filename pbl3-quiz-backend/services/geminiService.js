@@ -3,11 +3,11 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 // Lấy key từ môi trường
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Danh sách các model từ mới đến cũ để fallback nếu model chính lỗi
+// Danh sách các model từ nhanh, ổn định nhất (Ưu tiên gemini-1.5-flash cho gói Free)
 const FALLBACK_MODELS = [
-    "gemini-2.5-flash", 
+    "gemini-1.5-flash", 
     "gemini-2.0-flash", 
-    "gemini-flash-latest"
+    "gemini-1.5-pro"
 ];
 
 // Hàm hỗ trợ delay (miliseconds)
@@ -19,14 +19,13 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
     // Thử lần lượt các model trong danh sách fallback
     for (const modelName of FALLBACK_MODELS) {
         let attempts = 0;
-        const maxRetries = 2; // Thử tối đa 3 lần cho mỗi model (gốc + 2 lần retry)
+        const maxRetries = 1; // Giảm xuống 1 lần retry để tránh spam API free
 
         while (attempts <= maxRetries) {
             try {
                 if (attempts > 0) {
                     console.log(`[Gemini Service] Thử lại lần ${attempts} với model ${modelName}...`);
-                    // Exponential backoff: 1s, 2s...
-                    await sleep(attempts * 1000);
+                    await sleep(3000); // Tăng delay lên 3s để API kịp reset rate limit
                 }
 
                 const model = genAI.getGenerativeModel({ model: modelName });
@@ -72,10 +71,10 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
                 ]
                 `;
 
-                // Bổ sung timeout 15s cho mỗi request AI
+                // Tăng timeout lên 60s vì đọc file dài tốn rất nhiều thời gian suy nghĩ
                 const result = await Promise.race([
                     model.generateContent(prompt),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('AI Request Timeout')), 15000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('AI Request Timeout')), 60000))
                 ]);
                 const response = await result.response;
                 let text = response.text();
@@ -101,12 +100,16 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
                 
                 console.error(`[Gemini Service] Lỗi khi dùng model ${modelName} (Attempt ${attempts + 1}):`, error.message);
 
-                // Nếu lỗi là 503 (Service Unavailable) hoặc 429 (Rate Limit) hoặc 500 (Internal System Error), thì mới retry
-                if (status === 503 || status === 429 || status === 500) {
+                // Nếu lỗi 429 (Quá tải), ném lỗi luôn để không spam API
+                if (status === 429) {
+                    throw new Error("Bạn đã vượt quá giới hạn lượt dùng API miễn phí của Google. Vui lòng chờ 1-2 phút rồi thử lại.");
+                }
+
+                // Nếu lỗi là 503 (Service Unavailable) hoặc 500 (Internal System Error), thì mới retry
+                if (status === 503 || status === 500) {
                     attempts++;
-                    continue; // Thử lại với model hiện tại
+                    continue; 
                 } else {
-                    // Lỗi khác (vd: prompt quá dài, lỗi API key) thì không retry model này nữa, chuyển model fallback hoặc báo lỗi luôn
                     break; 
                 }
             }

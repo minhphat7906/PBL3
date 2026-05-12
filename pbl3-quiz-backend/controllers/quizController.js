@@ -1,6 +1,6 @@
 const quizService = require('../services/quizService');
 const quizRepository = require('../repositories/quizRepository');
-const geminiService = require('../services/geminiService');
+const aiService = require('../services/aiService');
 const notificationRepository = require('../repositories/notificationRepository');
 
 const coverImages = {
@@ -343,9 +343,13 @@ const generateAIQuizzes = async (req, res) => {
                         documentText = fileBuffer.toString('utf-8');
                     }
                 } finally {
-                    // Luôn xóa file tạm sau khi đọc xong
-                    if (fs.existsSync(filePath)) {
-                        fs.unlinkSync(filePath);
+                    // Luôn cố gắng xóa file tạm sau khi đọc xong
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                    } catch (err) {
+                        console.warn(`[AI] Không thể xóa file tạm ngay lập tức (Windows EBUSY), sẽ để hệ thống tự dọn dẹp sau.`);
                     }
                 }
                 
@@ -361,7 +365,7 @@ const generateAIQuizzes = async (req, res) => {
                 return res.status(400).json({ success: false, message: "Cần nhập chủ đề hoặc đính kèm tài liệu" });
             }
 
-            const aiQuestions = await geminiService.generateQuizAI(
+            const aiQuestions = await aiService.generateQuizAI(
                 topic || 'Nội dung từ tài liệu đính kèm',
                 count,
                 diff,
@@ -379,9 +383,8 @@ const generateAIQuizzes = async (req, res) => {
 const explainQuestion = async (req, res) => {
     try {
         const { questionId } = req.body;
-        if (!questionId) return res.status(400).json({ success: false, message: "Thiếu ID câu hỏi" });
-
-        // 1. Kiểm tra Cache
+        
+        // 1. Kiểm tra Cache trong DB trước để tiết kiệm tiền
         const question = await quizRepository.getQuestionById(questionId);
         if (!question) return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi" });
 
@@ -389,16 +392,16 @@ const explainQuestion = async (req, res) => {
             return res.json({ success: true, explanation: question.ai_explanation, cached: true });
         }
 
-        // 2. Nếu chưa có, gọi AI
-        const aiResponse = await geminiService.explainQuestion(question);
+        // 2. Nếu chưa có thì mới gọi AI (Hệ thống sẽ tự chọn Gemini hoặc Beeknoee)
+        const explanation = await aiService.explainQuestion(question);
         
-        // 3. Lưu vào Cache (Database)
-        await quizRepository.updateQuestionAIExplanation(questionId, aiResponse);
+        // 3. Lưu lại vào DB để lần sau không tốn tiền gọi AI nữa
+        await quizRepository.updateQuestionAIExplanation(questionId, explanation);
 
-        res.json({ success: true, explanation: aiResponse, cached: false });
+        res.json({ success: true, explanation, cached: false });
     } catch (error) {
-        console.error("Lỗi AI Explain:", error);
-        res.status(500).json({ success: false, message: error.message || "Lỗi AI" });
+        console.error("Lỗi AI Explain Controller:", error);
+        res.status(500).json({ success: false, message: "AI Tutor đang bận, vui lòng thử lại sau." });
     }
 };
 

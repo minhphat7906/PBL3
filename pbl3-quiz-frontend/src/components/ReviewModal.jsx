@@ -230,7 +230,7 @@ const ReviewModal = ({ isOpen, onClose, questions, userAnswers }) => {
                           )}
                           <div className="text-left">
                             <span className="block font-black text-lg">Hỏi AI Tutor giải thích</span>
-                            <span className="block text-indigo-100 text-xs font-medium">Sử dụng Gemini AI để phân tích sâu hơn</span>
+                            <span className="block text-indigo-100 text-xs font-medium">Sử dụng AI để phân tích sâu hơn</span>
                           </div>
                         </div>
                       </button>
