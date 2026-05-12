@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import RatingModal from '../components/RatingModal';
+import ReviewModal from '../components/ReviewModal';
 import { Star } from 'lucide-react';
 
 const ResultDetail = () => {
@@ -28,6 +29,7 @@ const ResultDetail = () => {
     const [currentUserRank, setCurrentUserRank] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showRatingModal, setShowRatingModal] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -204,6 +206,7 @@ const ResultDetail = () => {
                     </button>
 
                     <button 
+                      onClick={() => setShowReviewModal(true)}
                       className="group bg-white p-6 rounded-[32px] border-2 border-transparent bg-gradient-to-r from-slate-900 to-slate-800 text-white transition-all flex items-center justify-between shadow-lg hover:shadow-2xl hover:-translate-y-1"
                     >
                         <div className="flex items-center gap-5">
@@ -324,6 +327,14 @@ const ResultDetail = () => {
                     </section>
                 </div>
             </main>
+
+            {/* Review Modal */}
+            <ReviewModal 
+                isOpen={showReviewModal}
+                onClose={() => setShowReviewModal(false)}
+                questions={result.questions_list || []}
+                userAnswers={userAnswers}
+            />
         </div>
     );
 };

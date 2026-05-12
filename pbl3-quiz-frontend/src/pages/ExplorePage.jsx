@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import QuizDetailModal from '../components/QuizDetailModal';
 import PreviewModal from '../components/PreviewModal';
+import ThemeSwitcher from '../components/ThemeSwitcher.jsx';
 import LightQuizCard from '../components/LightQuizCard';
 import Sidebar from '../components/Sidebar';
 
@@ -188,7 +189,7 @@ const ExplorePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fc] dark:bg-slate-950 font-sans text-slate-900 transition-colors duration-300">
+    <div className="flex min-h-screen bg-[#f8f9fc] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
       
       {/* SIDEBAR */}
       <Sidebar />
@@ -202,7 +203,7 @@ const ExplorePage = () => {
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8">Tìm kiếm, luyện tập và chia sẻ những bộ đề chất lượng nhất cùng cộng đồng.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 flex items-center gap-4">
+              <div className="bg-gradient-to-br from-[var(--theme-primary)] to-purple-600 rounded-3xl p-6 text-white shadow-lg shadow-[var(--theme-glow)] flex items-center gap-4">
                 <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
                   <Database size={32} className="text-white" />
                 </div>
@@ -242,7 +243,7 @@ const ExplorePage = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex shrink-0 items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#1e1b4b] dark:bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 scale-105' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                  className={`flex shrink-0 items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--theme-primary-dark)] dark:bg-[var(--theme-primary)] text-white shadow-xl shadow-[var(--theme-glow)] scale-105' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:text-[var(--theme-primary)]'}`}
                 >
                   {tab.icon} {tab.label}
                 </button>
@@ -251,17 +252,18 @@ const ExplorePage = () => {
 
             <div className="flex flex-1 items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0">
               <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-[var(--theme-primary)] transition-colors" size={18} />
                 <input 
                   type="text" 
                   placeholder="Tìm tên đề, tác giả..." 
-                  className="w-full pl-12 pr-4 py-3 bg-[#f8f9fc] dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-sm text-slate-900 dark:text-slate-100"
+                  className="w-full pl-12 pr-4 py-3 bg-[#f8f9fc] dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/10 focus:border-[var(--theme-primary)] transition-all font-bold text-sm text-slate-900 dark:text-slate-100"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
               <div className="flex gap-2">
+                <ThemeSwitcher mode="header" />
                 <CustomDropdown 
                   value={category} 
                   onChange={setCategory} 
@@ -352,7 +354,7 @@ const ExplorePage = () => {
                     <button 
                       key={pNum}
                       onClick={() => setPage(pNum)}
-                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all shadow-sm ${page === pNum ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-indigo-200 dark:hover:border-indigo-700'}`}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all shadow-sm ${page === pNum ? 'bg-[var(--theme-primary)] text-white shadow-[var(--theme-glow)] scale-110' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-[var(--theme-primary)]'}`}
                     >
                       {pNum}
                     </button>
@@ -363,7 +365,7 @@ const ExplorePage = () => {
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-[var(--theme-primary)] hover:border-[var(--theme-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 <ChevronRight size={20} />
               </button>
@@ -391,7 +393,7 @@ const ExplorePage = () => {
       {/* TẠO ĐỀ THI FLOATING BUTTON */}
       <button 
         onClick={() => navigate('/create-quiz')}
-        className="fixed bottom-8 right-8 z-40 flex items-center gap-3 bg-gradient-to-r from-[#4f46e5] to-purple-500 text-white px-6 py-3.5 rounded-full font-black shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 transition-all group animate-bounce hover:animate-none"
+        className="fixed bottom-24 right-8 z-40 flex items-center gap-3 bg-gradient-to-r from-[var(--theme-primary)] to-purple-500 text-white px-6 py-3.5 rounded-full font-black shadow-xl shadow-[var(--theme-glow)] hover:shadow-[var(--theme-glow)] hover:-translate-y-1 transition-all group animate-bounce hover:animate-none"
       >
         <span className="bg-white/20 p-1.5 rounded-full group-hover:rotate-90 transition-transform">
           <BookOpen size={18} className="text-white" />

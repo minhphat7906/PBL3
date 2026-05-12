@@ -2,6 +2,109 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-primary: var(--theme-primary);
+  --color-primary-light: var(--theme-primary-light);
+  --color-primary-dark: var(--theme-primary-dark);
+}
+
+:root {
+  /* Default Theme: Indigo */
+  --theme-primary-light: #e0e7ff; 
+  --theme-primary: #4f46e5; 
+  --theme-primary-dark: #312e81; 
+  --theme-glow: rgba(79, 70, 229, 0.4);
+}
+
+.theme-emerald {
+  --theme-primary-light: #d1fae5; 
+  --theme-primary: #10b981; 
+  --theme-primary-dark: #064e3b; 
+  --theme-glow: rgba(16, 185, 129, 0.4);
+}
+
+.theme-violet {
+  --theme-primary-light: #ede9fe; 
+  --theme-primary: #7c3aed; 
+  --theme-primary-dark: #4c1d95; 
+  --theme-glow: rgba(124, 58, 237, 0.4);
+}
+
+.theme-rose {
+  --theme-primary-light: #ffe4e6; 
+  --theme-primary: #f43f5e; 
+  --theme-primary-dark: #881337; 
+  --theme-glow: rgba(244, 63, 94, 0.4);
+}
+
+.theme-orange {
+  --theme-primary-light: #ffedd5; 
+  --theme-primary: #f97316; 
+  --theme-primary-dark: #7c2d12; 
+  --theme-glow: rgba(249, 115, 22, 0.4);
+}
+
+.theme-sky {
+  --theme-primary-light: #e0f2fe; 
+  --theme-primary: #0ea5e9; 
+  --theme-primary-dark: #0c4a6e; 
+  --theme-glow: rgba(14, 165, 233, 0.4);
+}
+
+/* === HERO SECTION (Landing Page) - LUÔN TỐI === */
+.hero-dark-bg {
+  background-color: #0c0a15;
+  background-image: 
+    radial-gradient(at 0% 0%, var(--theme-primary-dark) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, #171527 0px, transparent 50%),
+    radial-gradient(at 100% 100%, var(--theme-primary) 0px, transparent 60%),
+    radial-gradient(at 0% 100%, #0c0a15 0px, transparent 50%);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* === DASHBOARD / APP PAGES === */
+.mesh-gradient-bg {
+  background-color: #f3f4f8;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(79, 70, 229, 0.06) 0px, transparent 60%),
+    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.dark .mesh-gradient-bg {
+  background-color: #0c0a15;
+  background-image: 
+    radial-gradient(at 0% 0%, var(--theme-primary-dark) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, #171527 0px, transparent 50%),
+    radial-gradient(at 100% 100%, var(--theme-primary) 0px, transparent 60%),
+    radial-gradient(at 0% 100%, #0c0a15 0px, transparent 50%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glow-hover {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.glow-hover:hover {
+  box-shadow: 0 0 20px var(--theme-glow);
+  border-color: var(--theme-primary);
+}
+
 /* --- Clean and Professional Dark Mode --- */
 
 /* Base backgrounds */
@@ -49,6 +152,26 @@
 .dark .border-slate-200, 
 .dark .border-slate-300 {
   border-color: #2e2b4a !important;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Custom scrollbar for better Bento look */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--theme-primary);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary-dark);
 }
 
 /* Form Elements */

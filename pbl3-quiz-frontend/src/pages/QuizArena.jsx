@@ -5,6 +5,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import RatingModal from '../components/RatingModal';
 import { Star } from 'lucide-react';
+import EpicResultScreen from '../components/EpicResultScreen';
 
 const QuizArena = () => {
   const navigate = useNavigate();
@@ -214,64 +215,28 @@ const QuizArena = () => {
           <Clock size={18} /><span className="tracking-widest text-xl">{isSubmitted ? "ĐÃ NỘP" : formatTime(timeLeft)}</span>
         </div>
       </header>
-      {isSubmitted && score && (
-        <div className="max-w-7xl mx-auto w-full px-6 lg:px-8 mt-8">
-           <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 md:p-10 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col lg:flex-row items-center gap-10 bg-gradient-to-br from-[#f8f9ff] to-[#f4ebff] dark:from-slate-900 dark:to-indigo-950/20 relative overflow-hidden transition-colors duration-300">
-               {/* Điểm nhấn Background góc */}
-               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-
-               {/* Left Info */}
-               <div className="flex-1 text-[#1e1b4b] dark:text-slate-100 relative z-10 text-center lg:text-left">
-                  <div className="text-indigo-600 dark:text-indigo-400 font-black text-xs uppercase tracking-widest mb-3">Thông số bài làm (Result Overview)</div>
-                  <h2 className="text-4xl md:text-5xl font-black mb-4 leading-tight">{quiz.title}</h2>
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">Hoàn thành lúc {new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} • Mức điểm: <span className={`font-bold ${score.score >= 8 ? 'text-indigo-600 dark:text-indigo-400' : score.score >= 5 ? 'text-amber-500' : 'text-red-500'}`}>{score.score >= 8 ? 'Xuất Sắc' : score.score >= 5 ? 'Đạt' : 'Chưa Đạt'}</span></p>
-               </div>
-
-               {/* Center Progress Ring */}
-               <div className="relative w-48 h-48 flex shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-xl z-10 transition-colors">
-                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f1f5f9" className="dark:stroke-slate-700" strokeWidth="3" />
-                      <path strokeDasharray={`${(score.correctCount / score.totalQuestions) * 100}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#progressGradient)" strokeWidth="3" className="transition-all duration-1000 ease-out" strokeLinecap="round" />
-                      <defs>
-                          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#4f46e5" />
-                              <stop offset="100%" stopColor="#c026d3" />
-                          </linearGradient>
-                      </defs>
-                  </svg>
-                  <div className="text-center flex flex-col items-center">
-                     <span className="text-5xl font-black text-[#1e1b4b] dark:text-slate-100">
-                         {Math.round((score.correctCount / score.totalQuestions) * 100)}
-                     </span>
-                     <span className="text-slate-400 dark:text-slate-500 font-bold text-xs uppercase mt-1 tracking-widest border-t border-slate-100 dark:border-slate-700 w-12 pt-1">/ 100</span>
-                  </div>
-               </div>
-
-               {/* Right Stats Info */}
-               <div className="flex flex-col md:flex-row lg:flex-col gap-4 w-full lg:w-64 z-10">
-                  <div className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
-                     <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                        <Clock size={20} />
-                     </div>
-                     <div>
-                       <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Thời gian (Time)</div>
-                       <div className="text-xl font-black text-[#1e1b4b] dark:text-slate-100">{formatTime(score.time_spent)}</div>
-                     </div>
-                  </div>
-
-                  <div className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
-                     <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <CheckCircle2 size={20} />
-                     </div>
-                     <div>
-                       <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Câu Đúng (Correct)</div>
-                       <div className="text-xl font-black text-[#1e1b4b] dark:text-slate-100">{score.correctCount} / {score.totalQuestions}</div>
-                     </div>
-                  </div>
-               </div>
-           </div>
+      {isSubmitted && score ? (
+        <div className="w-full h-full overflow-y-auto py-8 px-4">
+          <EpicResultScreen 
+            score={score.correctCount} 
+            totalQuestions={score.totalQuestions} 
+            answers={answers} 
+            quizData={quiz} 
+            timeSpent={score.time_spent} 
+          />
+          <div className="max-w-6xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+               <button onClick={() => setShowRatingModal(true)} className="w-full py-4 rounded-[20px] bg-amber-500 text-white font-black text-lg flex items-center justify-center gap-2 shadow-xl shadow-amber-200/40 hover:-translate-y-1 transition-all duration-300">
+                  <Star size={20} fill="currentColor" /> ĐÁNH GIÁ QUIZ
+               </button>
+               <button onClick={() => window.location.reload()} className="w-full py-4 rounded-[20px] bg-indigo-600 dark:bg-indigo-500 text-white font-black text-lg flex items-center justify-center gap-2 shadow-xl shadow-indigo-300/40 hover:-translate-y-1 transition-all duration-300">
+                  <RefreshCw size={20} /> LÀM LẠI BÀI THI
+               </button>
+               <button onClick={() => navigate('/explore')} className="w-full py-4 rounded-[20px] bg-white dark:bg-slate-800 border-[2px] border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-100 dark:hover:border-indigo-900 text-lg flex items-center justify-center gap-2 shadow-sm transition-all duration-300">
+                  <Search size={20} /> QUAY LẠI KHO ĐỀ
+               </button>
+          </div>
         </div>
-      )}
+      ) : (
 
       <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
         
@@ -482,6 +447,7 @@ const QuizArena = () => {
           )}
         </div>
       </div>
+      )}
     </div>
     
     {showRatingModal && (

@@ -118,4 +118,35 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
     console.error("=== LỖI TẤT CẢ MODEL GEMINI ===");
     console.error(lastError);
     throw new Error("Dịch vụ AI đang bận hoặc gặp lỗi tạm thời. Vui lòng thử lại sau giây lát.");
+};
+
+exports.explainQuestion = async (questionData) => {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Sử dụng model rẻ/nhanh nhất
+
+    const prompt = `
+    Bạn là một trợ giảng AI thông minh. Hãy giải thích câu hỏi sau đây một cách súc tích, dễ hiểu và khoa học.
+    
+    Câu hỏi: ${questionData.question_text}
+    Các lựa chọn:
+    A. ${questionData.option_a}
+    B. ${questionData.option_b}
+    C. ${questionData.option_c}
+    D. ${questionData.option_d}
+    Đáp án đúng: ${questionData.correct_option}
+
+    Yêu cầu:
+    1. Giải thích tại sao đáp án ${questionData.correct_option} là đúng.
+    2. Nếu có thể, hãy chỉ ra lỗi sai phổ biến mà học sinh hay mắc phải ở câu này.
+    3. Trình bày bằng tiếng Việt, định dạng Markdown (có thể dùng in đậm, danh sách).
+    4. KHÔNG chào hỏi, hãy đi thẳng vào vấn đề. Giới hạn trong khoảng 100-150 từ.
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+    } catch (error) {
+        console.error("[Gemini Explain] Error:", error.message);
+        throw new Error("Không thể kết nối với trí tuệ nhân tạo lúc này.");
+    }
 };

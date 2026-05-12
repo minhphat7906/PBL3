@@ -11,8 +11,11 @@ import LightQuizCard from '../components/LightQuizCard';
 import Sidebar from '../components/Sidebar';
 import NotificationDropdown from '../components/NotificationDropdown';
 import QuizDetailModal from '../components/QuizDetailModal';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} 
+import ThemeSwitcher from '../components/ThemeSwitcher.jsx';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer} 
  from 'recharts';
+import CountUpRaw from 'react-countup';
+const CountUp = CountUpRaw.default || CountUpRaw;
 
 // ─── Axios helper ─────────────────────────────────────────────────────
 const authAxios = () => {
@@ -63,12 +66,13 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    // Sync local state if html class changes
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const [quizzes, setQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -208,7 +212,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#f3f4f8] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-200 transition-colors duration-300">
+    <div className="flex min-h-screen mesh-gradient-bg font-sans text-slate-900 dark:text-slate-200 transition-colors duration-300">
 
       {/* ═══ SIDEBAR ═══ */}
       <Sidebar streakInfo={streakInfo} />
@@ -217,29 +221,23 @@ const Dashboard = () => {
       <main className="flex-1 ml-64 p-8 pt-6 overflow-x-hidden">
 
         {/* Header - Fixed/Sticky */}
-        <header className="sticky top-0 z-20 flex items-center justify-between pb-5 mb-6 border-b border-slate-200/70 dark:border-slate-700 bg-[#f3f4f8]/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <header className="sticky top-0 z-20 flex items-center justify-between pb-5 mb-6 border-b border-white/10 glass-card rounded-b-3xl px-6 py-4 mt-[-1.5rem] pt-8">
           <div className="flex-1 flex items-center">
             {/* Quote Banner */}
-            <div className="hidden md:flex items-center border border-indigo-100/50 dark:border-indigo-700/30 rounded-full px-5 py-2 bg-indigo-50/50 dark:bg-indigo-900/20 max-w-lg shadow-inner">
+            <div className="hidden md:flex items-center border border-[var(--theme-primary-light)]/50 dark:border-[var(--theme-primary-dark)]/30 rounded-full px-5 py-2 bg-[var(--theme-primary-light)]/50 dark:bg-[var(--theme-primary-dark)]/20 max-w-lg shadow-inner overflow-hidden">
               <Quote size={16} className="text-amber-500 mr-2 shrink-0 animate-bounce" />
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 italic truncate" key={quote}>{quote}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 italic truncate" key={quote}>{quote || "Tri thức là sức mạnh."}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              title="Chuyển nền"
-            >
-              {isDarkMode ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-slate-600" />}
-            </button>
+            {ThemeSwitcher && <ThemeSwitcher mode="header" />}
             <div className="relative">
               <div 
                 onClick={() => {
                   setShowNotifications(!showNotifications);
                   if (!showNotifications) setUnreadCount(0); // Giả lập đánh dấu đã xem khi mở
                 }}
-                className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                className="p-2.5 glass-card glow-hover rounded-xl shadow-sm cursor-pointer transition-colors"
                 title="Thông báo"
               >
                 <Bell className={unreadCount > 0 ? "text-indigo-600 animate-pulse" : "text-slate-400"} size={20} />
@@ -262,7 +260,7 @@ const Dashboard = () => {
                     : 'border-slate-200 dark:border-slate-700'
                 }`}
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center font-black text-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-violet-600 text-white flex items-center justify-center font-black text-sm">
                   {username.charAt(0).toUpperCase()}
                 </div>
                 <span className="font-bold text-sm text-slate-700 dark:text-slate-300 hidden sm:block">{username}</span>
@@ -294,8 +292,8 @@ const Dashboard = () => {
                       onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
-                        <User size={15} className="text-indigo-600 dark:text-indigo-400" />
+                      <div className="w-8 h-8 rounded-lg bg-[var(--theme-primary-light)] dark:bg-[var(--theme-primary-dark)]/30 flex items-center justify-center">
+                        <User size={15} className="text-[var(--theme-primary)] dark:text-[var(--theme-primary-light)]" />
                       </div>
                       <div className="text-left">
                         <p className="font-semibold leading-snug">Trang cá nhân</p>
@@ -348,7 +346,7 @@ const Dashboard = () => {
         <div className="space-y-6">
 
           {/* ═══ TẦNG 1: BANNER ═══ */}
-          <section className="relative bg-gradient-to-r from-[#1e1b4b] via-[#2d2a6e] to-[#4f46e5] rounded-3xl overflow-hidden p-8 shadow-xl shadow-indigo-500/20">
+          <section className="relative bg-gradient-to-r from-[var(--theme-primary-dark)] via-[#1e1b4b] to-[var(--theme-primary)] rounded-[32px] overflow-hidden p-8 shadow-xl shadow-[var(--theme-glow)]">
             <div className="absolute top-0 right-0 w-96 h-96 opacity-10 pointer-events-none">
               <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                 <path fill="#ffffff" d="M44.7,-62.7C56.1,-53.2,61.2,-36.7,66.1,-20.1C71,-3.4,75.8,13.4,71.4,27.3C66.9,41.2,53.3,52.2,38.7,60.3C24.2,68.4,8.7,73.6,-5.4,70.6C-19.5,67.6,-32.2,56.4,-46.8,46.2C-61.4,36,-77.9,26.8,-81.1,14.5C-84.3,2.2,-74.2,-13.1,-63.3,-25.3C-52.5,-37.5,-41,-46.7,-28.7,-55.4C-16.3,-64.2,-3.2,-72.6,11,-73.1C25.1,-73.7,33.3,-72.2,44.7,-62.7Z" transform="translate(100 100)" />
@@ -381,7 +379,7 @@ const Dashboard = () => {
               {statCards.map((s, i) => {
                 const c = colorMap[s.color];
                 return (
-                  <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md dark:hover:bg-slate-700/50 hover:-translate-y-0.5 transition-all duration-200">
+                  <div key={i} className="glass-card glow-hover rounded-[24px] p-5 hover:-translate-y-1 transition-all duration-300">
                     <div className={`w-10 h-10 ${c.light} ${c.text} rounded-xl flex items-center justify-center mb-3`}>{s.icon}</div>
                     <p className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5">{s.value}</p>
                     <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{s.label}</p>
@@ -392,7 +390,7 @@ const Dashboard = () => {
             </div>
 
             {/* Chart - Dữ liệu thật */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm">
+            <div className="glass-card rounded-[24px] p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-black text-slate-800 dark:text-slate-200 text-sm">Hoạt động tuần</h3>
@@ -409,18 +407,28 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height={160}>
                   <AreaChart data={weekData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="gIndigo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                      <linearGradient id="gTheme" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--theme-primary)" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="var(--theme-primary)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#e2e8f0' }} />
-                    <Area type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2.5} fill="url(#gIndigo)"
-                      dot={{ fill: '#4f46e5', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                      activeDot={{ r: 5, fill: '#4f46e5', stroke: '#fff', strokeWidth: 2 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#1e293b' : '#f1f5f9'} />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: isDarkMode ? '#64748b' : '#94a3b8', fontSize: 10, fontWeight: 700}}
+                      dy={5}
+                    />
+                    <RechartsTooltip content={<ChartTooltip />} cursor={{stroke: 'var(--theme-primary)', strokeWidth: 2}} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="var(--theme-primary)" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#gTheme)" 
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -437,7 +445,7 @@ const Dashboard = () => {
                   <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">Đề thi đề xuất</h2>
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">Những bộ đề chất lượng</p>
                 </div>
-                <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex glass-card p-1 rounded-xl shadow-sm">
                   {[{ id: 'all', label: 'Công khai' }, { id: 'mine', label: 'Của tôi' }].map(t => (
                     <button key={t.id} onClick={() => setActiveTab(t.id)}
                       className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
@@ -450,8 +458,8 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {isLoading ? (
                   Array(4).fill(0).map((_, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl h-[300px] animate-pulse border border-slate-200 dark:border-slate-700">
-                      <div className="h-36 bg-slate-200 dark:bg-slate-700 rounded-t-2xl"></div>
+                    <div key={i} className="glass-card rounded-[24px] h-[300px] animate-pulse">
+                      <div className="h-36 bg-slate-200/50 dark:bg-slate-700/50 rounded-t-[24px]"></div>
                       <div className="p-4 space-y-3">
                         <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full w-1/3"></div>
                         <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded-lg w-3/4"></div>
@@ -460,7 +468,7 @@ const Dashboard = () => {
                     </div>
                   ))
                 ) : filteredQuizzes.length === 0 ? (
-                  <div className="col-span-full py-16 text-center bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                  <div className="col-span-full py-16 text-center glass-card rounded-[24px] border border-dashed border-white/20">
                     <div className="text-5xl mb-3">📭</div>
                     <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">Chưa có đề thi nào.</p>
                     <button onClick={() => navigate('/create-quiz')} className="mt-4 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors">
@@ -485,7 +493,7 @@ const Dashboard = () => {
 
               {filteredQuizzes.length > 0 && (
                 <button onClick={() => navigate('/explore')}
-                  className="w-full mt-5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-400 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group text-sm border border-transparent dark:border-slate-700">
+                  className="w-full mt-5 glass-card glow-hover text-slate-600 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-400 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group text-sm">
                   Xem tất cả trong Kho đề
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -496,7 +504,7 @@ const Dashboard = () => {
             <aside className="space-y-5">
 
               {/* LEADERBOARD (Dữ liệu thật + Tabs) */}
-              <div className="bg-[#1e1b4b] rounded-2xl overflow-hidden text-white shadow-xl shadow-indigo-900/20">
+              <div className="glass-card bg-gradient-to-b from-[#1e1b4b]/80 to-[#0c0a15]/80 rounded-[24px] overflow-hidden text-white shadow-xl shadow-indigo-900/20 backdrop-blur-xl border border-white/10">
                 {/* Tabs */}
                 <div className="flex border-b border-white/10">
                   {LEADERBOARD_TABS.map(tab => (
@@ -541,7 +549,7 @@ const Dashboard = () => {
               </div>
 
               {/* TIPS */}
-              <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-5 text-white shadow-lg shadow-indigo-400/25 relative overflow-hidden group">
+              <div className="bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-primary-dark)] rounded-[24px] p-5 text-white shadow-lg relative overflow-hidden group glow-hover transition-all">
                 <Sparkles className="absolute -bottom-2 -right-2 w-16 h-16 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
                 <div className="text-2xl mb-3">💡</div>
                 <h3 className="font-black text-sm mb-1.5">Mẹo của ngày</h3>
@@ -554,7 +562,7 @@ const Dashboard = () => {
               </div>
 
               {/* QUICK ACTIONS */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+              <div className="glass-card rounded-[24px] p-5 glow-hover transition-all">
                 <h3 className="font-black text-slate-600 dark:text-slate-400 text-[10px] uppercase tracking-widest mb-3">Thao tác nhanh</h3>
                 <div className="space-y-1.5">
                   {[
