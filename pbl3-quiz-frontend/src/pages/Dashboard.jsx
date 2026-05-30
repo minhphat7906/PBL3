@@ -9,9 +9,8 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import LightQuizCard from '../components/LightQuizCard';
 import Sidebar from '../components/Sidebar';
-import NotificationDropdown from '../components/NotificationDropdown';
 import QuizDetailModal from '../components/QuizDetailModal';
-import ThemeSwitcher from '../components/ThemeSwitcher.jsx';
+import Header from '../components/Header';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer} 
  from 'recharts';
 import CountUpRaw from 'react-countup';
@@ -48,22 +47,6 @@ const Dashboard = () => {
 
   // Toggle Dark Mode globally
   const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
-  const [quote, setQuote] = useState("Tri thức là sức mạnh.");
-  
-  const quotes = [
-    "Học, học nữa, học mãi. - V.I. Lenin",
-    "Thành công là kết quả của sự kiên trì. - A. Einstein",
-    "Sự đầu tư vào kiến thức mang lợi nhuận cao nhất.",
-    "Trên bước đường thành công không có dấu chân của kẻ lười biếng.",
-    "Ngày hôm nay là học trò của ngày hôm qua."
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     // Sync local state if html class changes
@@ -84,8 +67,6 @@ const Dashboard = () => {
   const [lbLoading, setLbLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
@@ -126,21 +107,10 @@ const Dashboard = () => {
       } catch (err) { console.error(err); }
     };
 
-    const fetchNotificationsCount = async () => {
-      try {
-        const res = await api.get('http://localhost:3000/api/v1/notifications');
-        if (res.data.success) {
-          const unread = res.data.notifications.filter(n => !n.is_read).length;
-          setUnreadCount(unread);
-        }
-      } catch (err) { console.error(err); }
-    };
-
     fetchQuizzes();
     fetchStats();
     fetchStreak();
     fetchChart();
-    fetchNotificationsCount();
   }, [activeTab]);
 
   // Fetch leaderboard on tab change
@@ -199,149 +169,17 @@ const Dashboard = () => {
     active: 'lượt',
   };
 
-  // Header dropdown state
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const userMenuRef = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
   return (
     <div className="flex min-h-screen mesh-gradient-bg font-sans text-slate-900 dark:text-slate-200 transition-colors duration-300">
 
       {/* ═══ SIDEBAR ═══ */}
       <Sidebar streakInfo={streakInfo} />
 
+      {/* ─── HEADER ─── */}
+      <Header />
+
       {/* ═══ MAIN ═══ */}
-      <main className="flex-1 ml-64 p-8 pt-6 overflow-x-hidden">
-
-        {/* Header - Fixed/Sticky */}
-        <header className="sticky top-0 z-20 flex items-center justify-between pb-5 mb-6 border-b border-white/10 glass-card rounded-b-3xl px-6 py-4 mt-[-1.5rem] pt-8">
-          <div className="flex-1 flex items-center">
-            {/* Quote Banner */}
-            <div className="hidden md:flex items-center border border-[var(--theme-primary-light)]/50 dark:border-[var(--theme-primary-dark)]/30 rounded-full px-5 py-2 bg-[var(--theme-primary-light)]/50 dark:bg-[var(--theme-primary-dark)]/20 max-w-lg shadow-inner overflow-hidden">
-              <Quote size={16} className="text-amber-500 mr-2 shrink-0 animate-bounce" />
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 italic truncate" key={quote}>{quote || "Tri thức là sức mạnh."}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {ThemeSwitcher && <ThemeSwitcher mode="header" />}
-            <div className="relative">
-              <div 
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  if (!showNotifications) setUnreadCount(0); // Giả lập đánh dấu đã xem khi mở
-                }}
-                className="p-2.5 glass-card glow-hover rounded-xl shadow-sm cursor-pointer transition-colors"
-                title="Thông báo"
-              >
-                <Bell className={unreadCount > 0 ? "text-indigo-600 animate-pulse" : "text-slate-400"} size={20} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-[#f3f4f8] dark:border-slate-800 animate-bounce">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </div>
-              {showNotifications && <NotificationDropdown onClose={() => setShowNotifications(false)} />}
-            </div>
-            {/* ── User Premium Dropdown ── */}
-            <div className="relative" ref={userMenuRef}>
-              {/* Trigger button */}
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`flex items-center gap-2.5 bg-white dark:bg-slate-800 pl-2 pr-3 py-1.5 rounded-full border shadow-sm hover:shadow-md transition-all ${
-                  showUserMenu
-                    ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-400/20'
-                    : 'border-slate-200 dark:border-slate-700'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-violet-600 text-white flex items-center justify-center font-black text-sm">
-                  {username.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-bold text-sm text-slate-700 dark:text-slate-300 hidden sm:block">{username}</span>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Dropdown Panel */}
-              {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2.5 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50">
-
-                  {/* ── User Info Header ── */}
-                  <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-800 dark:to-indigo-900/10 border-b border-slate-100 dark:border-slate-700">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center font-black text-lg shrink-0 ring-2 ring-indigo-400/30">
-                        {username.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">{username}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                          {JSON.parse(localStorage.getItem('user') || '{}')?.email || 'quizsmart@user.com'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ── Group 1: Profile & Plans ── */}
-                  <div className="py-1.5">
-                    <button
-                      onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-[var(--theme-primary-light)] dark:bg-[var(--theme-primary-dark)]/30 flex items-center justify-center">
-                        <User size={15} className="text-[var(--theme-primary)] dark:text-[var(--theme-primary-light)]" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold leading-snug">Trang cá nhân</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Xem & chỉnh sửa hồ sơ</p>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* ── Group 2: Settings & Help ── */}
-                  <div className="py-1.5 border-t border-slate-100 dark:border-slate-700">
-                    <button
-                      onClick={() => { setShowUserMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                        <Settings size={15} className="text-slate-500 dark:text-slate-400" />
-                      </div>
-                      <span>Cài đặt hệ thống</span>
-                    </button>
-                    <button
-                      onClick={() => { setShowUserMenu(false); navigate('/help'); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors font-medium"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-                        <HelpCircle size={15} className="text-emerald-500 dark:text-emerald-400" />
-                      </div>
-                      <span>Trợ giúp & Hỗ trợ</span>
-                    </button>
-                  </div>
-
-                  {/* ── Group Logout ── */}
-                  <div className="py-1.5 border-t border-slate-100 dark:border-slate-700">
-                    <button
-                      onClick={() => { setShowUserMenu(false); handleLogout(); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-semibold"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                        <LogOut size={15} className="text-red-500" />
-                      </div>
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
-
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+      <main className="flex-1 ml-64 p-8 pt-28 overflow-x-hidden">
 
         <div className="space-y-6">
 
@@ -504,13 +342,15 @@ const Dashboard = () => {
             <aside className="space-y-5">
 
               {/* LEADERBOARD (Dữ liệu thật + Tabs) */}
-              <div className="glass-card bg-gradient-to-b from-[#1e1b4b]/80 to-[#0c0a15]/80 rounded-[24px] overflow-hidden text-white shadow-xl shadow-indigo-900/20 backdrop-blur-xl border border-white/10">
+              <div className="glass-card dark:bg-gradient-to-b dark:from-[#1e1b4b]/80 dark:to-[#0c0a15]/80 rounded-[24px] overflow-hidden text-slate-800 dark:text-white shadow-xl dark:shadow-indigo-900/20 backdrop-blur-xl border border-slate-200/80 dark:border-white/10">
                 {/* Tabs */}
-                <div className="flex border-b border-white/10">
+                <div className="flex border-b border-slate-100 dark:border-white/10">
                   {LEADERBOARD_TABS.map(tab => (
                     <button key={tab.id} onClick={() => setLbTab(tab.id)}
                       className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all
-                        ${lbTab === tab.id ? 'bg-indigo-600/40 text-white border-b-2 border-indigo-400' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
+                        ${lbTab === tab.id 
+                          ? 'bg-indigo-600/10 dark:bg-indigo-600/40 text-indigo-600 dark:text-white border-b-2 border-indigo-500 dark:border-indigo-400' 
+                          : 'text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5'}`}>
                       {tab.label}
                     </button>
                   ))}
@@ -521,24 +361,24 @@ const Dashboard = () => {
                     {lbLoading ? (
                       Array(4).fill(0).map((_, i) => (
                         <div key={i} className="flex items-center gap-3 px-2 py-2.5 rounded-xl animate-pulse">
-                          <div className="w-6 h-6 bg-white/10 rounded-lg"></div>
-                          <div className="flex-1 h-3 bg-white/10 rounded-full"></div>
-                          <div className="w-10 h-3 bg-white/10 rounded-full"></div>
+                          <div className="w-6 h-6 bg-slate-100 dark:bg-white/10 rounded-lg"></div>
+                          <div className="flex-1 h-3 bg-slate-200/60 dark:bg-white/10 rounded-full"></div>
+                          <div className="w-10 h-3 bg-slate-200/60 dark:bg-white/10 rounded-full"></div>
                         </div>
                       ))
                     ) : leaderboard.length === 0 ? (
-                      <p className="text-center text-white/30 text-xs py-4">Chưa có dữ liệu</p>
+                      <p className="text-center text-slate-400 dark:text-white/30 text-xs py-4">Chưa có dữ liệu</p>
                     ) : (
                       leaderboard.map((u, i) => {
                         const medals = ['🥇', '🥈', '🥉'];
                         return (
-                          <div key={i} className="flex items-center justify-between px-2 py-2 rounded-xl hover:bg-white/5 transition-all">
+                          <div key={i} className="flex items-center justify-between px-2 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                             <div className="flex items-center gap-2.5">
                               <span className="text-base w-5 text-center">{medals[i] || `${i + 1}`}</span>
-                              <p className="text-sm font-bold truncate max-w-[100px]">{u.username}</p>
+                              <p className="text-sm font-bold truncate max-w-[100px] text-slate-700 dark:text-slate-200">{u.username}</p>
                             </div>
-                            <p className="font-black text-xs text-indigo-400 shrink-0">
-                              {u.score} <span className="text-white/30">{lbScoreLabel[lbTab]}</span>
+                            <p className="font-black text-xs text-indigo-600 dark:text-indigo-400 shrink-0">
+                              {u.score} <span className="text-slate-400 dark:text-white/30 font-medium">{lbScoreLabel[lbTab]}</span>
                             </p>
                           </div>
                         );

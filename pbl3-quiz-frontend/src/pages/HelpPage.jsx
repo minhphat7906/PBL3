@@ -5,6 +5,7 @@ import {
   Search, Mail, Phone, CheckCircle, Send, Clock, Zap, Shield, LifeBuoy
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
 import axios from 'axios';
 
 // ─── FAQ Data ─────────────────────────────────────────────────────────────────
@@ -147,8 +148,11 @@ const HelpPage = () => {
       {/* ── Sidebar ── */}
       <Sidebar />
 
+      {/* ── HEADER ── */}
+      <Header />
+
       {/* ── Main Content ── */}
-      <main className="flex-1 ml-64 p-8 overflow-x-hidden">
+      <main className="flex-1 ml-64 p-8 pt-28 overflow-x-hidden">
         <div className="max-w-5xl mx-auto">
 
           {/* ── Header ── */}

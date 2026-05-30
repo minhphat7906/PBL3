@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Star, ArrowLeft, MessageSquare, User, Calendar, Award, Loader2, Info } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
 
 const ReviewsPage = () => {
     const { quizId } = useParams();
@@ -56,7 +57,10 @@ const ReviewsPage = () => {
         <div className="flex min-h-screen bg-[#f8f9fc] dark:bg-slate-950 font-sans transition-colors duration-300">
             <Sidebar />
 
-            <main className="flex-1 ml-64 p-8">
+            {/* HEADER */}
+            <Header />
+
+            <main className="flex-1 ml-64 p-8 pt-28">
                 <div className="max-w-5xl mx-auto">
                     {/* Back Button */}
                     <button 

@@ -357,13 +357,13 @@ export default function Profile() {
 
             {/* Avatar URL Input – chỉ hiện khi đang edit */}
             {isOwnProfile && isEditingBio && (
-              <div className="mb-3">
-                <label className="block text-xs text-slate-400 mb-1.5 font-medium">URL Ảnh đại diện</label>
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">URL Ảnh đại diện</label>
                 <input
                   id="avatar-url-input"
                   value={editAvatarUrl}
                   onChange={e => setEditAvatarUrl(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-slate-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   placeholder="https://example.com/avatar.jpg"
                 />
               </div>
@@ -434,19 +434,19 @@ export default function Profile() {
 
           {/* ── CỘT PHẢI: Đổi mật khẩu (CHỈ HIỆN KHI isOwnProfile) ── */}
           {isOwnProfile && (
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 flex flex-col gap-5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
-                  <Lock className="w-4 h-4 text-indigo-400" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col gap-6 shadow-sm transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h2 className="font-semibold text-white">Đổi mật khẩu</h2>
+                <h2 className="font-black text-slate-900 dark:text-white text-lg">Đổi mật khẩu</h2>
               </div>
 
               <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
 
                 {/* Current Password */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-400">Mật khẩu hiện tại</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Mật khẩu hiện tại</label>
                   <div className="relative">
                     <input
                       id="current-password-input"
@@ -454,11 +454,11 @@ export default function Profile() {
                       value={pwForm.currentPassword}
                       onChange={e => setPwForm(p => ({ ...p, currentPassword: e.target.value }))}
                       required
-                      className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                       placeholder="••••••••"
                     />
                     <button type="button" onClick={() => setShowPw(s => ({ ...s, current: !s.current }))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
                       {showPw.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -466,7 +466,7 @@ export default function Profile() {
 
                 {/* New Password */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-400">Mật khẩu mới</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Mật khẩu mới</label>
                   <div className="relative">
                     <input
                       id="new-password-input"
@@ -475,11 +475,11 @@ export default function Profile() {
                       onChange={e => setPwForm(p => ({ ...p, newPassword: e.target.value }))}
                       required
                       minLength={6}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                       placeholder="Tối thiểu 6 ký tự"
                     />
                     <button type="button" onClick={() => setShowPw(s => ({ ...s, new: !s.new }))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
                       {showPw.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -490,7 +490,7 @@ export default function Profile() {
                         <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
                           pwForm.newPassword.length >= i * 3
                             ? i <= 2 ? 'bg-orange-500' : 'bg-emerald-500'
-                            : 'bg-slate-600'
+                            : 'bg-slate-200 dark:bg-slate-700'
                         }`} />
                       ))}
                     </div>
@@ -499,7 +499,7 @@ export default function Profile() {
 
                 {/* Confirm Password */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-slate-400">Xác nhận mật khẩu mới</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Xác nhận mật khẩu mới</label>
                   <div className="relative">
                     <input
                       id="confirm-password-input"
@@ -507,22 +507,22 @@ export default function Profile() {
                       value={pwForm.confirmPassword}
                       onChange={e => setPwForm(p => ({ ...p, confirmPassword: e.target.value }))}
                       required
-                      className={`w-full bg-slate-700 border rounded-xl px-4 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      className={`w-full bg-slate-50 dark:bg-slate-800 border rounded-xl px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
                         pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword
-                          ? 'border-red-600'
+                          ? 'border-red-500'
                           : pwForm.confirmPassword && pwForm.newPassword === pwForm.confirmPassword
-                          ? 'border-emerald-600'
-                          : 'border-slate-600'
+                          ? 'border-emerald-500'
+                          : 'border-slate-200 dark:border-slate-700'
                       }`}
                       placeholder="Nhập lại mật khẩu mới"
                     />
                     <button type="button" onClick={() => setShowPw(s => ({ ...s, confirm: !s.confirm }))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
                       {showPw.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
-                    <p className="text-xs text-red-400">Mật khẩu không khớp</p>
+                    <p className="text-xs text-red-500 mt-1">Mật khẩu không khớp</p>
                   )}
                 </div>
 
@@ -530,7 +530,7 @@ export default function Profile() {
                   id="change-password-submit"
                   type="submit"
                   disabled={pwLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm mt-1"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-black rounded-xl transition-all shadow-md hover:shadow-lg text-sm mt-2"
                 >
                   {pwLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

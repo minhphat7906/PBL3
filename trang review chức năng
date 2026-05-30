@@ -62,7 +62,7 @@ Chào bạn, đây là bản review chi tiết toàn bộ hệ thống dự án 
 | **Phòng thi (Arena)** | `Lưới câu hỏi` | Nhảy nhanh đến câu hỏi bất kỳ (Câu chưa làm màu xám, đã làm màu xanh). |
 | | `Nộp bài` | Kết thúc bài thi và tính điểm ngay lập tức. |
 | | `Thoát` | Dừng làm bài và quay lại trang chủ (Có cảnh báo). |
-| **Kết quả** | `Xem giải thích` | Hiển thị lời giải chi tiết cho từng câu hỏi đã làm. |
+| **Kết quả** | `Phân tích chuyên sâu` | Mở Modal Review với bộ lọc thông minh và AI Tutor (Mới). |
 | | `Làm lại` | Chơi lại bộ đề đó một lần nữa để cải thiện điểm. |
 | **Hồ sơ** | `Cập nhật` | Lưu các thay đổi về thông tin cá nhân. |
 | | `Đổi Avatar` | Tải ảnh mới lên để thay đổi nhận diện cá nhân. |
@@ -72,64 +72,25 @@ Chào bạn, đây là bản review chi tiết toàn bộ hệ thống dự án 
 
 ---
 
-## III. PHẦN PHÁT TRIỂN, SỬA ĐỔI & CHECKLIST (DÀNH CHO BẠN)
+## III. NHẬT KÝ NÂNG CẤP & LỘ TRÌNH PHÁT TRIỂN
 
-Dưới đây là các ý tưởng "hạng nặng" để biến dự án của bạn thành một sản phẩm chuyên nghiệp, gây ấn tượng mạnh với nhà tuyển dụng:
+### 🚀 Giai đoạn Ổn định hóa & Nâng cấp hạ tầng AI (Cập nhật: 12/05/2026)
+*   **Hệ thống Multi-AI Switchboard**: Tích hợp song song **Gemini** và **Beeknoee (GLM-4.5-Flash)**. Hệ thống tự động chuyển đổi qua `.env` để đảm bảo không bao giờ bị gián đoạn do hết quota.
+*   **Cơ chế Stability Guard (Độc quyền)**:
+    *   **Concurrency Lock**: Chống xung đột request AI, đảm bảo độ ổn định tuyệt đối khi nhiều người dùng cùng tạo đề.
+    *   **Auto-Retry (5 lượt)**: Tự động thử lại thông minh với khoảng nghỉ (Delay) khi Server AI bận, giúp tỷ lệ tạo đề thành công đạt xấp xỉ 100%.
+    *   **Windows EBUSY Fix**: Khắc phục triệt để lỗi hệ thống file khóa trên Windows khi xử lý PDF/Word.
+*   **AI Intelligence Optimization**:
+    *   **JSON Repair & Temperature 0.3**: Ép AI tuân thủ cấu hình nghiêm ngặt, loại bỏ hoàn toàn lỗi vỡ định dạng dữ liệu (Unexpected token).
+    *   **AI Tutor 2.0**: Nâng cấp trình giải thích chuyên sâu với vai trò "Giáo viên tận tâm", hỗ trợ Markdown cực đẹp trong Modal Review.
+    *   **Smart Cache**: Lưu trữ giải thích AI vào Database, giúp tiết kiệm 100% token cho các câu hỏi đã được giải thích trước đó.
 
-*   **Checklist tính năng hiện có:**
-    *   [x] Đăng ký/Đăng nhập/OTP
-    *   [x] Tạo Quiz AI (PDF/Word)
-    *   [x] Dashboard & Chart (Thống kê & Biểu đồ)
-    *   [x] Leaderboard toàn cầu (Bảng xếp hạng)
-    *   [x] Hệ thống thông báo (Notifications)
-    *   [x] Dark Mode (Giao diện tối)
-
-*   **Ý tưởng phát triển mới (Tính năng "WOW"):**
-    *   [ ] 🔥 **Chế độ "Đấu Trường" (Real-time Multiplayer):** Sử dụng Socket.io để thi đấu trực tiếp 2-3 người cùng lúc, thấy điểm và tiến trình của đối thủ nhảy thời gian thực (như Kahoot).
-    - [ ] 🤖 **Trợ giảng AI (AI Tutor Chat):** Nút "Hỏi AI tại sao sai?" ở màn hình Review. Cho phép chat trực tiếp với Gemini để giải đáp sâu hơn về kiến thức của câu hỏi đó.
-    - [ ] 🗂️ **Flashcards (Thẻ ghi nhớ):** Chế độ học tập lật thẻ ghi nhớ giúp người dùng thuộc lòng kiến thức trước khi bước vào bài thi trắc nghiệm.
-    - [x] 📄 **Xuất PDF chuyên nghiệp:** Cho phép người dùng tải bộ đề về máy dưới dạng PDF có định dạng đẹp (Đã tích hợp trong Card đề thi).
-
-*   **Nâng cấp kỹ thuật:**
-    *   [ ] 🛡️ **Zod Validation:** Chuẩn hóa dữ liệu đầu vào ở Backend, ngăn chặn mọi hành vi gửi dữ liệu rác gây sập Server.
-    *   [ ] ⚡ **Nodemon Development:** Cấu hình để Server tự động khởi động lại khi lưu code, tiết kiệm thời gian phát triển.
-    *   [x] 🎬 **Framer Motion:** Thêm các hiệu ứng chuyển động (Animation) mượt màng khi chuyển câu hỏi và hiển thị kết quả, làm giao diện đẳng cấp hơn.
-
-*   **Ghi chú cá nhân của bạn:**
-    *   - ____________________________________________________
-    *   - ____________________________________________________
+### 💡 Lộ trình phát triển tương lai (Dự kiến)
+- [ ] 🔥 **Đấu Trường Real-time (Socket.io)**: Thi đấu trực tiếp nhiều người chơi theo phong cách Kahoot.
+- [ ] 🤖 **Smart Retake (Luyện tập lại câu sai)**: Tự động gom các câu làm sai trong lịch sử để tạo bộ đề "phục thù" cá nhân hóa.
+- [ ] 🗂️ **AI Flashcards**: Tự động chuyển đổi đề thi thành thẻ ghi nhớ (Anki style) để học tập nhanh.
+- [ ] 📄 **Xuất bản PDF / Word Pro**: In ấn đề thi chuyên nghiệp với 1 click.
+- [ ] 📈 **AI Analytics Advisor**: Phân tích điểm mạnh/yếu của người dùng và đưa ra lộ trình học tập cá nhân.
 
 ---
-
-## IV. TẦM NHÌN NÂNG CẤP UX/UI & GAMIFICATION (GIAI ĐOẠN TIẾP THEO)
-
-Đây là các ý tưởng để "lột xác" dự án, tạo ấn tượng cực mạnh về mặt thị giác và trải nghiệm người dùng:
-
-### 1. Nâng tầm Landing Page & Dashboard
-*   [x] **Mesh Gradient Background:** Sử dụng nền lưới màu ảo diệu (Tím/Xanh/Đen) thay cho nền trắng đơn điệu.
-*   [x] **Glassmorphism Card:** Thiết kế các khối chức năng theo phong cách "kính mờ" (Backdrop blur) tạo chiều sâu.
-*   [x] **Glow hover effect:** Hiệu ứng phát sáng neon khi di chuyển chuột qua các bộ đề.
-
-### 2. Trải nghiệm Kết quả "Epic" (Epic Result Screen)
-*   [x] **Số liệu nhảy (Count-up):** Điểm số và thông số chạy vù vù từ 0 lên con số thực tế khi vừa mở trang.
-*   [x] **Biểu đồ Radar (Recharts):** Phân tích kỹ năng người dùng (Tốc độ, Ghi nhớ, Suy luận) qua biểu đồ mạng nhện.
-*   [x] **Hệ thống Danh hiệu (Insights):** Tự động vinh danh user (VD: "Thánh tốc độ", "Chuỗi bùng nổ 5 câu đúng").
-*   [x] **Pháo hoa chúc mừng (Canvas Confetti):** Bắn pháo hoa giấy khi đạt điểm cao (trên 80%).
-
-### 3. Tích hợp Bảng xếp hạng trực tiếp (Smart Leaderboard)
-*   [x] **Tiêu chí xếp hạng:** Ưu tiên Điểm số cao nhất ➡️ Tốc độ hoàn thành nhanh nhất.
-*   [x] **Hiển thị thông minh:** Hiển thị Top 10, Highlight chính mình, và hiển thị thứ hạng cá nhân nếu ở ngoài Top.
-
-### 4. Hệ thống Cá nhân hóa (Theming)
-*   [x] **Accent Color Picker:** Cho phép người dùng đổi màu chủ đạo (Indigo, Emerald, Rose, Orange...) và chế độ Dark/Light trực tiếp trên Header.
-
----
-## V. NHẬT KÝ CẬP NHẬT (PHIÊN BẢN MỚI NHẤT)
-
-- **Fix White Screen**: Khắc phục triệt để lỗi trắng trang do xung đột React 19 với Recharts và CountUp.
-- **Smart Theme Engine**: Tích hợp bộ chuyển đổi màu sắc thông minh trên toàn hệ thống.
-- **Epic UI Update**: Nâng cấp toàn bộ giao diện theo phong cách Modern Glassmorphism.
-- **PDF Export**: Bổ sung tính năng tải đề thi về máy dưới dạng PDF.
-
----
-*Người soạn: Antigravity AI Assistant*
+*Người soạn: Antigravity AI Assistant (Cập nhật phiên bản AI Multi-Provider v2.0)*

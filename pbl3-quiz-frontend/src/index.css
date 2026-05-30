@@ -122,6 +122,26 @@
   color: #f1f5f9 !important;
 }
 
+.dark .bg-slate-50 {
+  background-color: #201d36 !important;
+  border-color: #2e2b4a !important;
+}
+
+.dark .bg-slate-50\/50 {
+  background-color: rgba(32, 29, 54, 0.5) !important;
+  border-color: #2e2b4a !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #292546 !important;
+  border-color: #2e2b4a !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #332f57 !important;
+  border-color: #3f3b6c !important;
+}
+
 /* Navigation and Headers */
 .dark header, 
 .dark nav, 
