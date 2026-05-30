@@ -117,17 +117,15 @@ const ReviewModal = ({ isOpen, onClose, questions, userAnswers }) => {
           {/* Filters */}
           <div className="px-8 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-2">
             {[
-              { id: 'all', label: 'Tất cả', color: 'indigo' },
-              { id: 'wrong', label: 'Câu sai', color: 'rose' },
-              { id: 'correct', label: 'Câu đúng', color: 'emerald' }
+              { id: 'all', label: 'Tất cả', activeClass: 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none border-transparent', inactiveClass: 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-400' },
+              { id: 'wrong', label: 'Câu sai', activeClass: 'bg-rose-600 text-white shadow-lg shadow-rose-200 dark:shadow-none border-transparent', inactiveClass: 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-rose-400' },
+              { id: 'correct', label: 'Câu đúng', activeClass: 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 dark:shadow-none border-transparent', inactiveClass: 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-emerald-400' }
             ].map((f) => (
               <button
                 key={f.id}
                 onClick={() => { setFilter(f.id); setCurrentIndex(0); }}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-                  filter === f.id 
-                  ? `bg-${f.color}-600 text-white shadow-lg shadow-${f.color}-200 dark:shadow-none`
-                  : `bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-${f.color}-400`
+                className={`px-6 py-2 rounded-xl text-sm font-bold border transition-all ${
+                  filter === f.id ? f.activeClass : f.inactiveClass
                 }`}
               >
                 {f.label}

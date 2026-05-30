@@ -8,25 +8,32 @@ const client = new OpenAI({
 
 const MODEL = "glm-4.5-flash";
 
-let isProcessing = false;
+// ✅ Tách riêng 2 lock để tránh xung đột
+let isGenerating = false;
+let isExplaining = false;
 
 /**
  * Tạo đề thi bằng Beeknoee (GLM-4.5-flash)
  */
 exports.generateQuizAI = async (topic, questionCount, difficulty, documentText = "") => {
-    if (isProcessing) {
-        throw new Error("Hệ thống AI đang xử lý một yêu cầu khác. Vui lòng đợi trong giây lát.");
+    if (isGenerating) {
+        throw new Error("Hệ thống AI đang tạo đề. Vui lòng đợi trong giây lát.");
     }
 
     try {
-        isProcessing = true;
+        isGenerating = true;
 
         let contextInstruction = `Hãy tạo chính xác ${questionCount} câu hỏi trắc nghiệm về chủ đề: "${topic}".`;
         
         if (documentText && documentText.trim() !== "") {
+            // TỐI ƯU TỐC ĐỘ: Cắt gọn xuống 5,000 ký tự (Đủ cho 10-15 câu mà AI đọc lướt cực nhanh)
+            const truncatedText = documentText.length > 10000 
+                ? documentText.substring(0, 10000) + "... [Dữ liệu đã được cắt bớt để tối ưu tốc độ]" 
+                : documentText;
+
             contextInstruction = `
-            Dưới đây là tài liệu tham khảo:
-            "${documentText}"
+            Dưới đây là tài liệu tham khảo (đã được tối ưu độ dài):
+            "${truncatedText}"
             YÊU CẦU: Tạo ra ${questionCount} câu hỏi trắc nghiệm BÁM SÁT tài liệu này.
             `;
         }
@@ -61,16 +68,21 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
                 response = await client.chat.completions.create({
                     model: MODEL,
                     messages: [{ role: "user", content: prompt }],
-                    temperature: 0.3, // Giảm temperature để AI trả về kết quả chính xác hơn, ít sáng tạo linh tinh
+                    temperature: 0.3,
                     stream: false,
-                }, { timeout: 120000 }); 
+                    max_tokens: 2500, // TỐI ƯU TỐC ĐỘ: Ép AI chốt kết quả sớm, không nói dài dòng
+                }, { timeout: 180000 }); // Đợi tối đa 3 phút (180s) để tránh kẹt mạng và tạo request ảo (zombie request) trên server Beeknoee
                 
                 break; 
             } catch (err) {
-                if (err.status === 429 && i < MAX_RETRIES - 1) {
-                    console.warn(`[Beeknoee] Server bận, đang kiên trì đợi 10 giây để thử lại... (Lần ${i + 1})`);
-                    await new Promise(resolve => setTimeout(resolve, 10000));
-                    continue;
+                if (err.status === 429) {
+                    if (i < MAX_RETRIES - 1) {
+                        console.warn(`[Beeknoee] Server bận (hoặc đang xử lý request trước đó), đang đợi 15 giây để thử lại... (Lần ${i + 1})`);
+                        await new Promise(resolve => setTimeout(resolve, 15000));
+                        continue;
+                    } else {
+                        throw new Error("Tài khoản Beeknoee của bạn đang có một tiến trình tạo đề thi khác chưa hoàn tất, hoặc server quá tải. Vui lòng đợi 2-3 phút rồi thử lại.");
+                    }
                 }
                 throw err;
             }
@@ -97,7 +109,7 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
         console.error("[Beeknoee Service] Error:", error.message);
         throw error;
     } finally {
-        isProcessing = false;
+        isGenerating = false;
     }
 };
 
@@ -105,13 +117,12 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
  * Giải thích câu hỏi bằng Beeknoee (Có cơ chế Lock & Retry)
  */
 exports.explainQuestion = async (questionData) => {
-    if (isProcessing) {
-        // Nếu AI đang bận (ví dụ đang tạo đề), ta đợi một chút rồi thử lại thay vì báo lỗi luôn
+    if (isExplaining) {
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     try {
-        isProcessing = true;
+        isExplaining = true;
         const prompt = `
         Hãy đóng vai là một giáo viên tận tâm. Giải thích câu hỏi sau một cách chi tiết nhưng súc tích (khoảng 150 từ).
         
@@ -122,7 +133,7 @@ exports.explainQuestion = async (questionData) => {
         YÊU CẦU:
         1. Giải thích tại sao đáp án ${questionData.correct_option} là chính xác.
         2. Tại sao các phương án khác lại sai (nếu cần thiết).
-        3. Định dạng bằng Markdown (Sử dụng Bold, List để dễ đọc).
+        3. CHỈ trả về văn bản thuần túy (Plain text). KHÔNG sử dụng bất kỳ ký hiệu Markdown nào như ** (in đậm), # (tiêu đề), hoặc - (danh sách). Chỉ dùng ngắt dòng bình thường.
         4. Ngôn ngữ: Tiếng Việt.
         `;
 
@@ -150,6 +161,6 @@ exports.explainQuestion = async (questionData) => {
         console.error("[Beeknoee Explain] Error:", error.message);
         throw error;
     } finally {
-        isProcessing = false;
+        isExplaining = false;
     }
 };

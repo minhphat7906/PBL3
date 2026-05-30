@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, BookOpen, Clock, BarChart3, Flame, HelpCircle } from 'lucide-react';
+import { Home, BookOpen, Clock, BarChart3, Flame, HelpCircle, Beaker } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3000/api/v1';
 
@@ -49,6 +49,7 @@ const Sidebar = () => {
   const NAV_ITEMS = [
     { icon: Home,       label: 'Trang chủ',     path: '/dashboard' },
     { icon: BookOpen,   label: 'Kho đề thi',    path: '/explore' },
+    { icon: Beaker,     label: 'Phòng Lab',     path: '/personal-lab' },
     { icon: Clock,      label: 'Lịch sử thi',   path: '/history' },
     { icon: BarChart3,  label: 'Bảng xếp hạng', path: '/leaderboard' },
     { icon: HelpCircle, label: 'Trợ giúp',      path: '/help' },

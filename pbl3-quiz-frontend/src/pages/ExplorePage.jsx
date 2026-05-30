@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import QuizDetailModal from '../components/QuizDetailModal';
 import PreviewModal from '../components/PreviewModal';
-import ThemeSwitcher from '../components/ThemeSwitcher.jsx';
 import LightQuizCard from '../components/LightQuizCard';
 import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
 
 const CustomDropdown = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -194,12 +194,23 @@ const ExplorePage = () => {
       {/* SIDEBAR */}
       <Sidebar />
 
-      <main className="flex-1 ml-64 p-8">
+      {/* HEADER */}
+      <Header />
+
+      <main className="flex-1 ml-64 p-8 pt-28">
         <div className="max-w-7xl mx-auto">
           
           {/* HERO STATS */}
           <div className="mb-10">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 mb-3">Khám phá Kho dữ liệu khổng lồ 🚀</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+              <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100">Khám phá Kho dữ liệu khổng lồ 🚀</h1>
+              <button
+                onClick={() => navigate('/personal-lab')}
+                className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-650 hover:from-violet-700 hover:to-indigo-700 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer border border-violet-500/20 outline-none"
+              >
+                🧪 Phòng Lab của tôi
+              </button>
+            </div>
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8">Tìm kiếm, luyện tập và chia sẻ những bộ đề chất lượng nhất cùng cộng đồng.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -236,7 +247,7 @@ const ExplorePage = () => {
           </div>
 
           {/* ADVANCED FILTER BAR - Sticky */}
-          <div className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md pb-4 pt-2 -mx-2 px-2">
+          <div className="sticky top-20 z-20 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md pb-4 pt-2 -mx-2 px-2">
             <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 items-center justify-between transition-colors">
             <div className="flex gap-1.5 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {tabs.map(tab => (
@@ -263,7 +274,6 @@ const ExplorePage = () => {
               </div>
 
               <div className="flex gap-2">
-                <ThemeSwitcher mode="header" />
                 <CustomDropdown 
                   value={category} 
                   onChange={setCategory} 

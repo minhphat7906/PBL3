@@ -123,7 +123,9 @@ const getQuizzesByUserId = async (userId) => {
     request.input('userId', sql.Int, userId);
     const result = await request.query(`
         SELECT q.*, u.username as author_name, u.avatar_url as author_avatar, u.id as author_id, c.name as category_name,
-        (SELECT COUNT(*) FROM questions qq WHERE qq.quiz_id = q.id) as total_questions
+        (SELECT COUNT(*) FROM questions qq WHERE qq.quiz_id = q.id) as total_questions,
+        (SELECT COUNT(*) FROM results r WHERE r.quiz_id = q.id) as total_attempts,
+        (SELECT COUNT(*) FROM favorites f WHERE f.quiz_id = q.id) as total_likes
         FROM quizzes q
         LEFT JOIN categories c ON q.category_id = c.id
         JOIN users u ON q.creator_id = u.id

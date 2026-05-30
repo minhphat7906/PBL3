@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import RatingModal from '../components/RatingModal';
+import Header from '../components/Header';
 import { Star } from 'lucide-react';
 
 // ─── Component Dropdown tuỳ chỉnh ──────────────────────────────────────────────
@@ -262,12 +263,15 @@ const HistoryPage = () => {
       {/* ── SIDEBAR ── */}
       <Sidebar />
 
+      {/* ── HEADER ── */}
+      <Header />
+
       {/* ── MAIN ── */}
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 ml-64 p-8 pt-28">
         <div className="max-w-7xl mx-auto">
 
-          {/* Header - Sticky */}
-          <header className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-900/80 backdrop-blur-md pb-6 pt-2 -mx-2 px-2 border-b border-slate-200/50 dark:border-slate-700/50 mb-8">
+          {/* Page Local Header Banner */}
+          <div className="pb-6 border-b border-slate-200/50 dark:border-slate-800 mb-8">
             <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest mb-3">
               Học tập &amp; Rèn luyện
             </div>
@@ -277,7 +281,7 @@ const HistoryPage = () => {
             <p className="text-slate-500 dark:text-slate-400 text-lg mt-2 font-medium">
               Theo dõi tiến trình và phân tích điểm yếu của bản thân.
             </p>
-          </header>
+          </div>
 
           {/* ── MINI STATS ── */}
           {!isLoading && stats && (

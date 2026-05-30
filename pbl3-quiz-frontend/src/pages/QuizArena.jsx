@@ -180,10 +180,10 @@ const QuizArena = () => {
         if (res.isConfirmed) {
           localStorage.removeItem(`quiz_${quizId}_answers`);
           localStorage.removeItem(`quiz_${quizId}_time`);
-          navigate('/dashboard'); 
+          navigate(-1); 
         }
       });
-    } else navigate('/dashboard');
+    } else navigate(-1);
   };
 
   if (isLoading) return <div className="min-h-screen bg-[#f8f9fc] dark:bg-slate-950 flex flex-col items-center justify-center text-[#4f46e5] dark:text-indigo-400"><Loader2 className="animate-spin mb-4" size={48} /><h2 className="text-xl font-bold italic dark:text-slate-300">Đang chuẩn bị đề thi...</h2></div>;

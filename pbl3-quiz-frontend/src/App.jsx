@@ -18,6 +18,7 @@ import AdminPage from "./pages/AdminPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ThemeSwitcher from "./components/ThemeSwitcher";
+import PersonalLab from "./pages/PersonalLab";
 
 // Hàm bảo vệ cho Dashboard (chỉ user đã login mới được vào)
 const ProtectedRoute = ({ children }) => {
@@ -97,6 +98,15 @@ function App() {
   } 
 />
 <Route path="/edit-quiz/:id" element={<EditQuiz />} />
+        {/* Personal Lab */}
+        <Route
+          path="/personal-lab"
+          element={
+            <ProtectedRoute>
+              <PersonalLab />
+            </ProtectedRoute>
+          }
+        />
         {/* Profile - of own */}
         <Route
           path="/profile"

@@ -5,9 +5,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Danh sách các model từ nhanh, ổn định nhất (Ưu tiên gemini-1.5-flash cho gói Free)
 const FALLBACK_MODELS = [
-    "gemini-1.5-flash", 
-    "gemini-2.0-flash", 
-    "gemini-1.5-pro"
+    "gemini-2.5-flash", 
+    "gemini-flash-latest", 
+    "gemini-2.5-pro"
 ];
 
 // Hàm hỗ trợ delay (miliseconds)
@@ -124,7 +124,7 @@ exports.generateQuizAI = async (topic, questionCount, difficulty, documentText =
 };
 
 exports.explainQuestion = async (questionData) => {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Sử dụng model rẻ/nhanh nhất
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Sử dụng model rẻ/nhanh nhất
 
     const prompt = `
     Bạn là một trợ giảng AI thông minh. Hãy giải thích câu hỏi sau đây một cách súc tích, dễ hiểu và khoa học.
